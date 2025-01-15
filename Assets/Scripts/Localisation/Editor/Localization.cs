@@ -5,7 +5,7 @@ using static UnityEngine.GUILayout;
 
 public class Localization : EditorWindow
 {
-    private Dictionary<string, Dictionary<string, string>> _translations = new Dictionary<string, Dictionary<string, string>>();
+    private static Dictionary<string, Dictionary<string, string>> _translations = new Dictionary<string, Dictionary<string, string>>();
     private List<string> _languages = new List<string> { "en", "fr", "ja" };
     private string[] _languageLabels = new string[] { "English (en)", "French (fr)", "Japanese (ja)" };
     private Vector2 _scrollPosition;
@@ -14,6 +14,11 @@ public class Localization : EditorWindow
     public static void ShowWindow()
     {
         GetWindow<Localization>("Localization Editor");
+    }
+    
+    private void OnEnable()
+    {
+        LoadTranslations();
     }
 
     private void OnGUI()
@@ -41,8 +46,14 @@ public class Localization : EditorWindow
             string key = t;
             BeginHorizontal();
             
+            if (GUILayout.Button("X", GUILayout.Width(20)))
+            {
+                RemoveKey(key);
+                break;
+            }
+            
             // Update and Creat Keys
-            string newKey = EditorGUILayout.TextField(key, Width(200));
+            string newKey = EditorGUILayout.TextField(key, Width(179));
             if (newKey != key)
             {
                 if (!_translations.ContainsKey(newKey))
@@ -106,6 +117,20 @@ public class Localization : EditorWindow
             }
         }
     }
+    
+    
+    private void RemoveKey(string key)
+    {
+        if (_translations.ContainsKey(key))
+        {
+            _translations.Remove(key);
+            Debug.Log($"Key '{key}' removed successfully.");
+        }
+        else
+        {
+            Debug.LogWarning($"Key '{key}' does not exist.");
+        }
+    }
 
     /*- New Language -*/
     private void AddNewLanguage()
@@ -160,7 +185,21 @@ public class Localization : EditorWindow
         string json = JsonUtility.ToJson(translationList, true);
 
         System.IO.File.WriteAllText(filePath, json);
-        AssetDatabase.Refresh();
+        
+        EditorApplication.delayCall += () =>
+        {
+            if (!EditorApplication.isCompiling && !EditorApplication.isUpdating)
+            {
+                AssetDatabase.Refresh();
+                UnityEditor.Compilation.CompilationPipeline.RequestScriptCompilation();
+            }
+        };
+    }
+    
+    public static List<string> GetAllTranslationKeys()
+    {
+        List<string> keys = new List<string>(_translations.Keys);
+        return keys;
     }
 
     private void LoadTranslations()
@@ -187,6 +226,16 @@ public class Localization : EditorWindow
         {
             Debug.LogWarning("No translation file found.");
         }
+    }
+    
+    public static string GetTranslation(string key)
+    {
+        if (_translations.ContainsKey(key) && _translations[key].ContainsKey("en"))
+        {
+            return _translations[key]["en"];
+        }
+
+        return $"Missing[{key}]";
     }
 
     [System.Serializable]

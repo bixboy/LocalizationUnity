@@ -1,3 +1,38 @@
 {
-    "translations": []
+    "translations": [
+        {
+            "key": "Txt-play",
+            "translations": [
+                {
+                    "language": "en",
+                    "translation": "Play"
+                },
+                {
+                    "language": "fr",
+                    "translation": "Jouer"
+                },
+                {
+                    "language": "ja",
+                    "translation": ""
+                }
+            ]
+        },
+        {
+            "key": "Btn-Languages",
+            "translations": [
+                {
+                    "language": "en",
+                    "translation": "fr"
+                },
+                {
+                    "language": "fr",
+                    "translation": "en"
+                },
+                {
+                    "language": "ja",
+                    "translation": ""
+                }
+            ]
+        }
+    ]
 }
