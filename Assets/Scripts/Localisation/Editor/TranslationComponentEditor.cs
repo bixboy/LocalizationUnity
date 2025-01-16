@@ -24,7 +24,7 @@ public class TranslationComponentEditor : Editor
         EditorGUILayout.LabelField("Select a Translation Key", EditorStyles.boldLabel);
 
         int currentIndex = keys.IndexOf(_translationComponent._localizationKey);
-        if (currentIndex < 0) currentIndex = 0; // Valeur par défaut si la clé actuelle n'existe pas
+        if (currentIndex < 0) currentIndex = 0;
 
         int selectedIndex = EditorGUILayout.Popup("Translation Key", currentIndex, keys.ToArray());
 
@@ -33,13 +33,18 @@ public class TranslationComponentEditor : Editor
             string selectedKey = keys[selectedIndex];
             if (_translationComponent && _textComponent)
             {
-                _translationComponent._localizationKey = selectedKey;
-                _textComponent.SetText(Localization.GetTranslation(selectedKey));
+                ChangeKey(selectedKey);
                 EditorUtility.SetDirty(target);
             }
         }
 
         base.OnInspectorGUI();
+    }
+
+    public void ChangeKey(string newKey)
+    {
+        _translationComponent._localizationKey = newKey;
+        _textComponent.SetText(Localization.GetTranslation(newKey));
     }
 }
 #endif

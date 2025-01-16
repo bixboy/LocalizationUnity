@@ -1,7 +1,9 @@
 using System.Collections.Generic;
 using System.IO;
+using TMPro;
 using UnityEditor;
 using UnityEngine;
+using UnityEngine.UIElements;
 using static UnityEngine.GUILayout;
 
 public class Localization : EditorWindow
@@ -10,6 +12,10 @@ public class Localization : EditorWindow
     private List<string> _languages = new List<string> { "en", "fr", "ja" };
     private string[] _languageLabels = new string[] { "English (en)", "French (fr)", "Japanese (ja)" };
     private Vector2 _scrollPosition;
+    
+    private int _selectedTab = 0;
+    private Vector2 _textMeshProScrollPosition;
+    private List<TMP_Text> _translateObjects;
 
     [MenuItem("Tools/Localization Editor")]
     public static void ShowWindow()
@@ -20,9 +26,26 @@ public class Localization : EditorWindow
     private void OnEnable()
     {
         LoadTranslations();
+        FindAllTranslateObjects();
     }
 
     private void OnGUI()
+    {
+        _selectedTab = GUILayout.Toolbar(_selectedTab, new string[] { "Localization Table", "Text Objects" });
+
+        switch (_selectedTab)
+        {
+            case 0:
+                DrawLocalizationTable();
+                break;
+            case 1:
+                DrawTextMeshProObjects();
+                break;
+        }
+        
+    }
+    
+    private void DrawLocalizationTable()
     {
         Label("Localization Table", EditorStyles.boldLabel);
         _scrollPosition = BeginScrollView(_scrollPosition, false, true);
@@ -85,15 +108,15 @@ public class Localization : EditorWindow
     
         EndScrollView();
     
+        BeginVertical();
+        
         // NEW KEY
-        Space(10);
         if (Button("Add New Key"))
         {
             AddNewKey();
         }
     
         // NEW LANGUAGE
-        Space(10);
         if (Button("Add New Language"))
         {
             AddNewLanguage();
@@ -111,7 +134,81 @@ public class Localization : EditorWindow
         {
             SaveTranslations();
         }
+        
+        EndVertical();
     }
+
+    // Text Component
+    #region Text Component
+
+        /*- Draw Window -*/
+        private void DrawTextMeshProObjects()
+        {
+            Label("Text Objects with Translate Component", EditorStyles.boldLabel);
+            _textMeshProScrollPosition = BeginScrollView(_textMeshProScrollPosition, false, true);
+    
+            if (_translateObjects != null)
+            {
+                foreach (var translateObject in _translateObjects)
+                {
+                    BeginHorizontal();
+    
+                    var translateComponent = translateObject.GetComponent<TranslationComponent>();
+                    var textMeshProComponent = translateObject.GetComponent<TextMeshProUGUI>();
+    
+                    if (translateComponent != null && textMeshProComponent != null)
+                    {
+                        List<string> keys = new List<string>(_translations.Keys);
+    
+                        int currentIndex = keys.IndexOf(translateComponent._localizationKey);
+                        if (currentIndex < 0) currentIndex = 0;
+    
+                        int selectedIndex = EditorGUILayout.Popup(
+                            textMeshProComponent.name, 
+                            currentIndex, 
+                            keys.ToArray(), 
+                            GUILayout.Width(400)
+                        );
+                    
+                        if (selectedIndex != currentIndex)
+                        {
+                            string selectedKey = keys[selectedIndex];
+                        
+                            translateComponent._localizationKey = selectedKey;
+                            textMeshProComponent.text = GetTranslation(translateComponent._localizationKey);
+                            EditorUtility.SetDirty(translateComponent);
+                        }
+                    }
+    
+                    EndHorizontal();
+                }
+            }
+            EndScrollView();
+    
+            if (GUILayout.Button("Refresh List"))
+            {
+                FindAllTranslateObjects();
+            }
+        }
+        
+        /*- Find all text -*/
+        private void FindAllTranslateObjects()
+        {
+            _translateObjects = new List<TMP_Text>();
+            var allObjects = Resources.FindObjectsOfTypeAll<TMP_Text>();
+    
+            foreach (var obj in allObjects)
+            {
+                if (obj.GetComponent<TranslationComponent>() != null)
+                {
+                    _translateObjects.Add(obj);
+                }
+            }
+    
+            Debug.Log($"Found {_translateObjects.Count} TextMeshPro objects with Translate component.");
+        }
+
+    #endregion
 
     // Languages
     #region Languages

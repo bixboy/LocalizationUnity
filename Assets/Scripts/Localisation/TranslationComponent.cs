@@ -7,8 +7,9 @@ public class TranslationComponent : MonoBehaviour
 {
     [HideInInspector]
     public string _localizationKey;
-
     private TMP_Text _textComponent;
+
+    public void RefreshText() => UpdateLocalizedText();
 
     private void Awake()
     {
@@ -37,7 +38,6 @@ public class TranslationComponent : MonoBehaviour
 
     private void UpdateLocalizedText()
     {
-
         if (!string.IsNullOrEmpty(_localizationKey))
         {
             _textComponent.text = LocalizationManager.Instance.GetTranslation(_localizationKey);
