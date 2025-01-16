@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using TMPro;
 using UnityEditor;
 using UnityEngine;
@@ -16,6 +17,7 @@ public class Localization : EditorWindow
     private int _selectedTab = 0;
     private Vector2 _textMeshProScrollPosition;
     private List<TMP_Text> _translateObjects;
+    public List<TMP_Text> GetTexts() => _translateObjects;
 
     [MenuItem("Tools/Localization Editor")]
     public static void ShowWindow()
@@ -28,7 +30,7 @@ public class Localization : EditorWindow
         LoadTranslations();
         FindAllTranslateObjects();
     }
-
+    
     private void OnGUI()
     {
         _selectedTab = GUILayout.Toolbar(_selectedTab, new string[] { "Localization Table", "Text Objects" });
@@ -64,6 +66,7 @@ public class Localization : EditorWindow
         }
         EndHorizontal();
     
+        List<string> keysToRemove = new List<string>();
         List<string> keys = new List<string>(_translations.Keys);
         foreach (var t in keys)
         {
@@ -73,8 +76,7 @@ public class Localization : EditorWindow
             // Update and Remove Keys
             if (GUILayout.Button("X", GUILayout.Width(20)))
             {
-                RemoveKey(key);
-                break;
+                keysToRemove.Add(key); 
             }
     
             // Update and Create Keys
@@ -102,13 +104,14 @@ public class Localization : EditorWindow
                     _translations[key][lang] = EditorGUILayout.TextField("", Width(100));
                 }
             }
-    
             EndHorizontal();
         }
-    
+        foreach (var keyToRemove in keysToRemove)
+        {
+            RemoveKey(keyToRemove);
+        }
+        
         EndScrollView();
-    
-        BeginVertical();
         
         // NEW KEY
         if (Button("Add New Key"))
@@ -134,8 +137,6 @@ public class Localization : EditorWindow
         {
             SaveTranslations();
         }
-        
-        EndVertical();
     }
 
     // Text Component
@@ -216,14 +217,15 @@ public class Localization : EditorWindow
         /*- New Language -*/
         private void AddNewLanguage()
         {
-            string newLanguage = "New Language";
-            if (!_languages.Contains(newLanguage))
+            string newLanguageKey = "New Language";
+            if (!_languages.Contains(newLanguageKey))
             {
-                _languages.Add(newLanguage);
-                foreach (var key in _translations.Keys)
-                {
-                    _translations[key].Add(newLanguage, "");
-                }
+                _languages.Add(newLanguageKey);
+                Debug.Log($"Added new language: {newLanguageKey}");
+            }
+            else
+            {
+                Debug.LogWarning($"The language '{newLanguageKey}' already exists in the dictionary.");
             }
         }
         

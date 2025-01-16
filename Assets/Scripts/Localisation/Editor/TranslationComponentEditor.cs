@@ -46,5 +46,14 @@ public class TranslationComponentEditor : Editor
         _translationComponent._localizationKey = newKey;
         _textComponent.SetText(Localization.GetTranslation(newKey));
     }
+    
+    private void OnDestroy()
+    {
+        var localizationEditor = FindFirstObjectByType<Localization>();
+        if (localizationEditor != null && localizationEditor.GetTexts() != null)
+        {
+            localizationEditor.GetTexts().Remove(_textComponent);
+        }
+    }
 }
 #endif

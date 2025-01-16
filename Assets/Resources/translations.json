@@ -30,10 +30,6 @@
                 {
                     "language": "i",
                     "translation": ""
-                },
-                {
-                    "language": "rn",
-                    "translation": ""
                 }
             ]
         },
@@ -67,10 +63,6 @@
                 {
                     "language": "i",
                     "translation": ""
-                },
-                {
-                    "language": "rn",
-                    "translation": ""
                 }
             ]
         },
@@ -90,7 +82,11 @@
                     "translation": ""
                 },
                 {
-                    "language": "rn",
+                    "language": "New Language",
+                    "translation": ""
+                },
+                {
+                    "language": "i",
                     "translation": ""
                 }
             ]

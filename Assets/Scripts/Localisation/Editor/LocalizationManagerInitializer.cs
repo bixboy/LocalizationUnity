@@ -11,7 +11,7 @@ public class LocalizationManagerInitializer
 
     private static void AddLocalizationManagerToScene()
     {
-        LocalizationManager existingManager = Object.FindObjectOfType<LocalizationManager>();
+        LocalizationManager existingManager = Object.FindFirstObjectByType<LocalizationManager>();
         if (existingManager != null)
         {
             existingManager.Initialization();
