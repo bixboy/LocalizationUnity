@@ -10,6 +10,30 @@
                 {
                     "language": "fr",
                     "translation": "Jouer"
+                },
+                {
+                    "language": "ja",
+                    "translation": ""
+                },
+                {
+                    "language": "New Language",
+                    "translation": ""
+                },
+                {
+                    "language": "e",
+                    "translation": ""
+                },
+                {
+                    "language": "es",
+                    "translation": ""
+                },
+                {
+                    "language": "i",
+                    "translation": ""
+                },
+                {
+                    "language": "rn",
+                    "translation": ""
                 }
             ]
         },
@@ -23,6 +47,51 @@
                 {
                     "language": "fr",
                     "translation": "en"
+                },
+                {
+                    "language": "ja",
+                    "translation": ""
+                },
+                {
+                    "language": "New Language",
+                    "translation": ""
+                },
+                {
+                    "language": "e",
+                    "translation": ""
+                },
+                {
+                    "language": "es",
+                    "translation": ""
+                },
+                {
+                    "language": "i",
+                    "translation": ""
+                },
+                {
+                    "language": "rn",
+                    "translation": ""
+                }
+            ]
+        },
+        {
+            "key": "Btn-Quit",
+            "translations": [
+                {
+                    "language": "en",
+                    "translation": "Quit"
+                },
+                {
+                    "language": "fr",
+                    "translation": "Quitter"
+                },
+                {
+                    "language": "ja",
+                    "translation": ""
+                },
+                {
+                    "language": "rn",
+                    "translation": ""
                 }
             ]
         }

@@ -6,18 +6,22 @@ public class LocalizationManagerInitializer
 {
     static LocalizationManagerInitializer()
     {
-        AddLocalizationManagerToScene();
+        EditorApplication.delayCall += AddLocalizationManagerToScene;
     }
 
     private static void AddLocalizationManagerToScene()
     {
         LocalizationManager existingManager = Object.FindObjectOfType<LocalizationManager>();
-
-        if (existingManager == null)
+        if (existingManager != null)
+        {
+            existingManager.Initialization();
+        }
+        else
         {
             GameObject localizationManagerObject = new GameObject("LocalizationManager");
-            localizationManagerObject.AddComponent<LocalizationManager>();
-            localizationManagerObject.GetComponent<LocalizationManager>().Initialization();
+            LocalizationManager newManager = localizationManagerObject.AddComponent<LocalizationManager>();
+
+            newManager.Initialization();
             Debug.Log("LocalizationManager added to the scene.");
         }
     }

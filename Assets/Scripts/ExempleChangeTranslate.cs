@@ -4,8 +4,9 @@ using UnityEngine;
 public class ExempleChangeTranslate : MonoBehaviour
 {
 
-    public void ChangeLanguage(TranslationComponent CompLang)
+    public void ChangeLanguage(TranslationComponent compLang)
     {
-        LocalizationManager.Instance.SetLanguage(CompLang.GetTextComponent().text);
+        Debug.Log(compLang);
+        LocalizationManager.Instance.SetLanguage(compLang.GetTextComponent().text);
     }
 }

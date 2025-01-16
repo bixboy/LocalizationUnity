@@ -1,7 +1,6 @@
 #if UNITY_EDITOR
 using TMPro;
 using UnityEditor;
-using UnityEngine;
 
 [CustomEditor(typeof(TranslationComponent))]
 public class TranslationComponentEditor : Editor
