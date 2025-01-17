@@ -147,45 +147,60 @@ public class Localization : EditorWindow
         {
             Label("Text Objects with Translate Component", EditorStyles.boldLabel);
             _textMeshProScrollPosition = BeginScrollView(_textMeshProScrollPosition, false, true);
-    
+        
             if (_translateObjects != null)
             {
                 foreach (var translateObject in _translateObjects)
                 {
+                    if (translateObject == null)
+                    {
+                        Debug.LogWarning("A TextMeshProUGUI object in the list is null or has been destroyed.");
+                        continue; // Passe à l'objet suivant
+                    }
+        
                     BeginHorizontal();
-    
+        
                     var translateComponent = translateObject.GetComponent<TranslationComponent>();
                     var textMeshProComponent = translateObject.GetComponent<TextMeshProUGUI>();
-    
+        
                     if (translateComponent != null && textMeshProComponent != null)
                     {
                         List<string> keys = new List<string>(_translations.Keys);
-    
+        
                         int currentIndex = keys.IndexOf(translateComponent._localizationKey);
                         if (currentIndex < 0) currentIndex = 0;
-    
+        
                         int selectedIndex = EditorGUILayout.Popup(
-                            textMeshProComponent.name, 
-                            currentIndex, 
-                            keys.ToArray(), 
+                            textMeshProComponent.name,
+                            currentIndex,
+                            keys.ToArray(),
                             GUILayout.Width(400)
                         );
-                    
+        
                         if (selectedIndex != currentIndex)
                         {
                             string selectedKey = keys[selectedIndex];
-                        
+        
                             translateComponent._localizationKey = selectedKey;
                             textMeshProComponent.text = GetTranslation(translateComponent._localizationKey);
                             EditorUtility.SetDirty(translateComponent);
                         }
                     }
-    
+                    else
+                    {
+                        Debug.LogWarning("Missing TranslationComponent or TextMeshProUGUI on the object.");
+                    }
+        
                     EndHorizontal();
                 }
             }
+            else
+            {
+                Debug.LogWarning("_translateObjects list is null.");
+            }
+        
             EndScrollView();
-    
+        
             if (GUILayout.Button("Refresh List"))
             {
                 FindAllTranslateObjects();
@@ -197,16 +212,22 @@ public class Localization : EditorWindow
         {
             _translateObjects = new List<TMP_Text>();
             var allObjects = Resources.FindObjectsOfTypeAll<TMP_Text>();
-    
+
             foreach (var obj in allObjects)
             {
+                if (obj == null || obj.gameObject == null)
+                {
+                    Debug.LogWarning("Found a null or destroyed object while searching for TMP_Text.");
+                    continue;
+                }
+
                 if (obj.GetComponent<TranslationComponent>() != null)
                 {
                     _translateObjects.Add(obj);
                 }
             }
-    
-            Debug.Log($"Found {_translateObjects.Count} TextMeshPro objects with Translate component.");
+
+            Debug.Log($"Found {_translateObjects.Count} TextMeshPro objects with TranslationComponent.");
         }
 
     #endregion
