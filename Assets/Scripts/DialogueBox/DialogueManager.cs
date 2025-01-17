@@ -1,19 +1,25 @@
+using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 
 public class DialogueManager : MonoBehaviour
 {
-    public static DialogueManager Instance;
-
-    public GameObject popupPrefab;
-    public GameObject panelPrefab;
-    public GameObject bubblePrefab;
+    public static DialogueManager instance;
+    public static GameObject currentDialog;
 
     private void Awake()
     {
-        if (Instance == null)
+        if (instance == null)
         {
-            Instance = this;
+            instance = this;
+            if (Application.isPlaying)
+            {
+                DontDestroyOnLoad(gameObject);
+            }
+        }
+        else if (instance != this)
+        {
+            Destroy(gameObject);
         }
     }
 
@@ -48,20 +54,30 @@ public class DialogueManager : MonoBehaviour
 
     private System.Collections.IEnumerator ShowPopup(DialogSO.DialogueLine line)
     {
-        if (line.popupPrefab != null)
+        if (line.popupPrefab)
         {
-            GameObject popup = Instantiate(line.popupPrefab);
-            popup.transform.position = Vector3.zero;
-
-            Text textComponent = popup.GetComponentInChildren<Text>();
-            if (textComponent != null)
+            currentDialog = Instantiate(line.popupPrefab);
+            if (currentDialog)
             {
-                textComponent.text = line.dialogueText;
+                currentDialog.transform.position = Vector3.zero;
+
+                TextMeshProUGUI textComponent = currentDialog.GetComponentInChildren<TextMeshProUGUI>();
+                if (textComponent)
+                {
+                    textComponent.text = line.dialogueText;
+                }
+
+                if (line.duration <= 0)
+                {
+                    yield return new WaitUntil(() => Input.GetKeyDown(KeyCode.Space));   
+                }
+                else
+                {
+                    yield return new WaitForSeconds(line.duration);
+                }
+
+                Destroy(currentDialog);   
             }
-
-            yield return new WaitUntil(() => Input.GetKeyDown(KeyCode.Space));
-
-            Destroy(popup);
         }
         else
         {
@@ -71,20 +87,30 @@ public class DialogueManager : MonoBehaviour
 
     private System.Collections.IEnumerator ShowPanel2D(DialogSO.DialogueLine line)
     {
-        if (line.panelPrefab != null)
+        if (line.panelPrefab)
         {
-            GameObject panel = Instantiate(line.panelPrefab);
-            panel.transform.position = Vector3.zero;
-
-            Text textComponent = panel.GetComponentInChildren<Text>();
-            if (textComponent != null)
+            currentDialog = Instantiate(line.panelPrefab);
+            if (currentDialog)
             {
-                textComponent.text = line.dialogueText;
+                currentDialog.transform.position = Vector3.zero;
+
+                TextMeshProUGUI textComponent = currentDialog.GetComponentInChildren<TextMeshProUGUI>();
+                if (textComponent)
+                {
+                    textComponent.text = line.dialogueText;
+                }
+
+                if (line.duration <= 0)
+                {
+                    yield return new WaitUntil(() => Input.GetKeyDown(KeyCode.Space));   
+                }
+                else
+                {
+                    yield return new WaitForSeconds(line.duration);
+                }
+
+                Destroy(currentDialog);   
             }
-
-            yield return new WaitUntil(() => Input.GetKeyDown(KeyCode.Space));
-
-            Destroy(panel);
         }
         else
         {
@@ -94,20 +120,30 @@ public class DialogueManager : MonoBehaviour
 
     private System.Collections.IEnumerator ShowBubble3D(DialogSO.DialogueLine line)
     {
-        if (line.bubblePrefab != null)
+        if (line.bubblePrefab)
         {
-            GameObject bubble = Instantiate(line.bubblePrefab);
-            bubble.transform.position = new Vector3(0, 1, 0);
-
-            Text textComponent = bubble.GetComponentInChildren<Text>();
-            if (textComponent != null)
+            currentDialog = Instantiate(line.bubblePrefab);
+            if (currentDialog)
             {
-                textComponent.text = line.dialogueText;
+                currentDialog.transform.position = new Vector3(0, 1, 0);
+
+                Text textComponent = currentDialog.GetComponentInChildren<Text>();
+                if (textComponent)
+                {
+                    textComponent.text = line.dialogueText;
+                }
+
+                if (line.duration <= 0)
+                {
+                    yield return new WaitUntil(() => Input.GetKeyDown(KeyCode.Space));   
+                }
+                else
+                {
+                    yield return new WaitForSeconds(line.duration);
+                }
+
+                Destroy(currentDialog);   
             }
-
-            yield return new WaitUntil(() => Input.GetKeyDown(KeyCode.Space));
-
-            Destroy(bubble);
         }
         else
         {

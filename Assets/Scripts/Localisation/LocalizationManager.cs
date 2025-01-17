@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using UnityEngine;
 
+[DefaultExecutionOrder(-1000)]
 public class LocalizationManager : MonoBehaviour
 {
     public static LocalizationManager Instance { get; private set; }
@@ -31,9 +32,9 @@ public class LocalizationManager : MonoBehaviour
                 DontDestroyOnLoad(gameObject);
             }
         }
-        else
+        else if (Instance != this)
         {
-            DestroyImmediate(gameObject);
+            Destroy(gameObject);
         }
     }
     

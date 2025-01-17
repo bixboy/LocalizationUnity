@@ -18,6 +18,7 @@ public class DialogSO : ScriptableObject
     {
         public string dialogueText;
         public DisplayMode displayMode;
+        public float duration;
         public GameObject popupPrefab;
         public GameObject panelPrefab;
         public GameObject bubblePrefab;

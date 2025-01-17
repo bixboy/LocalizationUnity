@@ -19,7 +19,7 @@ public class ExempleChangeTranslate : MonoBehaviour
 
         if (currentDialog)
         {
-            DialogueManager.Instance.StartDialogue(currentDialog);   
+            DialogueManager.instance.StartDialogue(currentDialog);   
         }
     }
 

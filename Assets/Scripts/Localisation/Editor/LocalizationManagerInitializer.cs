@@ -1,28 +1,20 @@
 using UnityEditor;
 using UnityEngine;
 
-[InitializeOnLoad]
-public class LocalizationManagerInitializer
+public static class LocalizationManagerInitializer
 {
-    static LocalizationManagerInitializer()
-    {
-        EditorApplication.delayCall += AddLocalizationManagerToScene;
-    }
-
+    [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
     private static void AddLocalizationManagerToScene()
     {
         LocalizationManager existingManager = Object.FindFirstObjectByType<LocalizationManager>();
         if (existingManager != null)
         {
-            existingManager.Initialization();
+            Debug.Log("LocalizationManager already exists in the scene.");
+            return;
         }
-        else
-        {
-            GameObject localizationManagerObject = new GameObject("LocalizationManager");
-            LocalizationManager newManager = localizationManagerObject.AddComponent<LocalizationManager>();
 
-            newManager.Initialization();
-            Debug.Log("LocalizationManager added to the scene.");
-        }
+        GameObject localizationManagerObject = new GameObject("LocalizationManager");
+        LocalizationManager newManager = localizationManagerObject.AddComponent<LocalizationManager>();
+        Debug.Log("LocalizationManager added to the scene.");
     }
 }

@@ -30,6 +30,11 @@ public class DialogTool : EditorWindow
         {
             GUILayout.Label("Please assign a DialogSO.");
         }
+        
+        if (GUILayout.Button("Create New DialogSO"))
+        {
+            CreateNewDialogSO();
+        }
 
         if (GUILayout.Button("Save Changes"))
         {
@@ -42,53 +47,99 @@ public class DialogTool : EditorWindow
         for (int i = 0; i < currentDialog.dialogueLines.Count; i++)
         {
             var line = currentDialog.dialogueLines[i];
+
+            EditorGUILayout.BeginVertical("Box");
+
             EditorGUILayout.BeginHorizontal();
-            
             if (GUILayout.Button("X", GUILayout.Width(20)))
             {
                 currentDialog.dialogueLines.RemoveAt(i);
-                return;
+                EditorGUILayout.EndHorizontal();
+                EditorGUILayout.EndVertical();
+                return; 
             }
+            EditorGUILayout.EndHorizontal();
 
-            EditorGUILayout.LabelField($"Line {i + 1}:");
+            EditorGUILayout.LabelField($"Line {i + 1}:", EditorStyles.boldLabel);
             line.dialogueText = EditorGUILayout.TextField(line.dialogueText);
 
-            // Affichage conditionnel des paramètres en fonction du type de dialogue
             line.displayMode = (DialogSO.DisplayMode)EditorGUILayout.EnumPopup("Display Mode", line.displayMode);
+
             switch (line.displayMode)
             {
                 case DialogSO.DisplayMode.Popup:
-                    line.popupPrefab = (GameObject)EditorGUILayout.ObjectField("Popup Prefab", line.popupPrefab, typeof(GameObject), false);
-                    if (GUILayout.Button("Create Popup Prefab"))
-                    {
-                        CreatePopupPrefab(line);
-                    }
+                    DisplayPopupOptions(line);
                     break;
+
                 case DialogSO.DisplayMode.Panel2D:
-                    line.panelPrefab = (GameObject)EditorGUILayout.ObjectField("Panel Prefab", line.panelPrefab, typeof(GameObject), false);
-                    if (GUILayout.Button("Create Panel2D Prefab"))
-                    {
-                        CreatePanel2DPrefab(line);
-                    }
+                    DisplayPanel2DOptions(line);
                     break;
+
                 case DialogSO.DisplayMode.Bulle3D:
-                    line.bubblePrefab = (GameObject)EditorGUILayout.ObjectField("Bubble Prefab", line.bubblePrefab, typeof(GameObject), false);
-                    if (GUILayout.Button("Create Bulle3D Prefab"))
-                    {
-                        CreateBubble3DPrefab(line);
-                    }
+                    DisplayBulle3DOptions(line);
                     break;
             }
-            
-            EditorGUILayout.EndHorizontal();
+
+            EditorGUILayout.EndVertical();
         }
     }
+
+    // Options Lines
+    #region Options Lines
+
+        // Méthodes pour afficher des options selon le mode
+        void DisplayPopupOptions(DialogSO.DialogueLine line)
+        {
+            line.duration = EditorGUILayout.FloatField("Duration", line.duration);
+            line.popupPrefab = (GameObject)EditorGUILayout.ObjectField("Popup Prefab", line.popupPrefab, typeof(GameObject), false);
+            if (GUILayout.Button("Create Popup Prefab"))
+            {
+                CreatePopupPrefab(line);
+            }
+        }
+    
+        void DisplayPanel2DOptions(DialogSO.DialogueLine line)
+        {
+            line.duration = EditorGUILayout.FloatField("Duration", line.duration);
+            line.panelPrefab = (GameObject)EditorGUILayout.ObjectField("Panel Prefab", line.panelPrefab, typeof(GameObject), false);
+            if (GUILayout.Button("Create Panel2D Prefab"))
+            {
+                CreatePanel2DPrefab(line);
+            }
+        }
+    
+        void DisplayBulle3DOptions(DialogSO.DialogueLine line)
+        {
+            line.duration = EditorGUILayout.FloatField("Duration", line.duration);
+            line.bubblePrefab = (GameObject)EditorGUILayout.ObjectField("Bubble Prefab", line.bubblePrefab, typeof(GameObject), false);
+            if (GUILayout.Button("Create Bulle3D Prefab"))
+            {
+                CreateBubble3DPrefab(line);
+            }
+        }
+
+    #endregion
 
     private void DisplayAddButton()
     {
         if (GUILayout.Button("Add Dialogue Line"))
         {
             currentDialog.dialogueLines.Add(new DialogSO.DialogueLine());
+        }
+    }
+    
+    private void CreateNewDialogSO()
+    {
+        string path = EditorUtility.SaveFilePanelInProject("Create New DialogSO", "NewDialogSO", "asset", "Specify a file name for the new DialogSO");
+        if (!string.IsNullOrEmpty(path))
+        {
+            DialogSO newDialogSO = CreateInstance<DialogSO>();
+            AssetDatabase.CreateAsset(newDialogSO, path);
+            AssetDatabase.SaveAssets();
+            EditorUtility.FocusProjectWindow();
+            Selection.activeObject = newDialogSO;
+            currentDialog = newDialogSO;
+            Debug.Log("New DialogSO created at: " + path);
         }
     }
 
@@ -169,10 +220,10 @@ public class DialogTool : EditorWindow
         textBtnMesh.alignment = TextAlignmentOptions.Center;
         textBtnMesh.enableAutoSizing = true;
     
-        string folderPath = "Assets/Dialogs/Prefabs";
+        string folderPath = "Assets/Dialogs";
         if (!AssetDatabase.IsValidFolder(folderPath))
         {
-            AssetDatabase.CreateFolder("Assets/Dialogs", "Prefabs");
+            AssetDatabase.CreateFolder("Assets", "Dialogs/Prefabs");
         }
     
         string path = folderPath + "/Popup.prefab";
@@ -216,10 +267,10 @@ public class DialogTool : EditorWindow
         textMesh.alignment = TextAlignmentOptions.Center;
         textMesh.text = "Sample Text";
     
-        string folderPath = "Assets/Dialogs/Prefabs";
+        string folderPath = "Assets/Dialogs";
         if (!AssetDatabase.IsValidFolder(folderPath))
         {
-            AssetDatabase.CreateFolder("Assets/Dialogs", "Prefabs");
+            AssetDatabase.CreateFolder("Assets", "Dialogs/Prefabs");
         }
     
         string path = folderPath + "/Panel2D.prefab";
@@ -249,10 +300,10 @@ public class DialogTool : EditorWindow
         
         textMesh.text = "Sample Text";
     
-        string folderPath = "Assets/Dialogs/Prefabs";
+        string folderPath = "Assets/Dialogs";
         if (!AssetDatabase.IsValidFolder(folderPath))
         {
-            AssetDatabase.CreateFolder("Assets/Dialogs", "Prefabs");
+            AssetDatabase.CreateFolder("Assets", "Dialogs/Prefabs");
         }
     
         string path = folderPath + "/Bubble3D.prefab";
@@ -260,11 +311,5 @@ public class DialogTool : EditorWindow
         DestroyImmediate(bubble);
         
         line.bubblePrefab = AssetDatabase.LoadAssetAtPath<GameObject>(path);
-    }
-
-    private Mesh CreateBubbleMesh()
-    {
-        // Create a simple 3D bubble (sphere)
-        return GameObject.CreatePrimitive(PrimitiveType.Sphere).GetComponent<MeshFilter>().mesh;
     }
 }

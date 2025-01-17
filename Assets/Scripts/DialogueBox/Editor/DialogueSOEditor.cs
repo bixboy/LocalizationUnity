@@ -26,6 +26,7 @@ public class DialogueSOEditor : Editor
 
             line.dialogueText = EditorGUILayout.TextField("Dialogue Text", line.dialogueText);
             line.displayMode = (DialogSO.DisplayMode)EditorGUILayout.EnumPopup("Display Mode", line.displayMode);
+            line.duration = EditorGUILayout.FloatField("Duration", line.duration);
 
             EditorGUILayout.EndVertical();
         }
