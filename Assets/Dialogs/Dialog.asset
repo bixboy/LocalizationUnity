@@ -15,16 +15,19 @@ MonoBehaviour:
   dialogueLines:
   - dialogueText: oui oui
     displayMode: 0
+    duration: 0
     popupPrefab: {fileID: 1637156525362956577, guid: 1731814b1d419aa41808ee91745da88d, type: 3}
     panelPrefab: {fileID: 0}
     bubblePrefab: {fileID: 0}
   - dialogueText: non non
     displayMode: 1
+    duration: 0
     popupPrefab: {fileID: 0}
     panelPrefab: {fileID: 4903256117873662356, guid: a81de864cc49b0148aa95b79c42d1d70, type: 3}
     bubblePrefab: {fileID: 0}
   - dialogueText: ye  ye
     displayMode: 2
+    duration: 0
     popupPrefab: {fileID: 0}
     panelPrefab: {fileID: 0}
     bubblePrefab: {fileID: 5240328826818915871, guid: a2aaa7e3fe1eae546862ac5b8bc0fedc, type: 3}

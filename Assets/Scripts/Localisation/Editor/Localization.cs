@@ -155,7 +155,7 @@ public class Localization : EditorWindow
                     if (translateObject == null)
                     {
                         Debug.LogWarning("A TextMeshProUGUI object in the list is null or has been destroyed.");
-                        continue; // Passe à l'objet suivant
+                        continue;
                     }
         
                     BeginHorizontal();

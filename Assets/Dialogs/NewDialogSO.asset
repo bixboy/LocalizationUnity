@@ -13,9 +13,15 @@ MonoBehaviour:
   m_Name: NewDialogSO
   m_EditorClassIdentifier: 
   dialogueLines:
-  - dialogueText: OUi
+  - dialogueText: oui oui
     displayMode: 0
-    duration: 0
+    duration: 3
+    popupPrefab: {fileID: 5894674928591304318, guid: ebbe7e85fe80bd648bc315a72cc917d1, type: 3}
+    panelPrefab: {fileID: 0}
+    bubblePrefab: {fileID: 0}
+  - dialogueText: Non non
+    displayMode: 0
+    duration: 2
     popupPrefab: {fileID: 5894674928591304318, guid: ebbe7e85fe80bd648bc315a72cc917d1, type: 3}
     panelPrefab: {fileID: 0}
     bubblePrefab: {fileID: 0}
