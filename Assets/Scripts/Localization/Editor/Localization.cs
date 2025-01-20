@@ -72,7 +72,7 @@ public class Localization : EditorWindow
         {
             string key = t;
             BeginHorizontal();
-    
+            
             // Update and Remove Keys
             if (GUILayout.Button("X", GUILayout.Width(20)))
             {
@@ -131,6 +131,12 @@ public class Localization : EditorWindow
         {
             ImportCsv();
         }
+        
+        // IMPORT CSV
+        if (Button("Export CSV"))
+        {
+            ExportCsv();
+        }
     
         // SAVE
         if (Button("Save All"))
@@ -145,63 +151,66 @@ public class Localization : EditorWindow
         /*- Draw Window -*/
         private void DrawTextMeshProObjects()
         {
-            Label("Text Objects with Translate Component", EditorStyles.boldLabel);
-            _textMeshProScrollPosition = BeginScrollView(_textMeshProScrollPosition, false, true);
-        
-            if (_translateObjects != null)
+            _scrollPosition = BeginScrollView(_scrollPosition, false, true);
+
+            foreach (var translateObject in _translateObjects)
             {
-                foreach (var translateObject in _translateObjects)
+                if (!translateObject)
                 {
-                    if (translateObject == null)
+                    FindAllTranslateObjects();
+                    EndScrollView();
+                    return;
+                }
+                
+                BeginHorizontal();
+                var translateComponent = translateObject?.GetComponent<TranslationComponent>();
+                var textMeshProComponent = translateObject?.GetComponent<TextMeshProUGUI>();
+
+                if (translateComponent && textMeshProComponent)
+                {
+                    List<string> keys = new List<string>(_translations.Keys);
+
+                    bool currentIsTranslatable = translateComponent.IsTranslatable;
+
+                    bool isTranslatable = EditorGUILayout.Toggle("Is Translatable", currentIsTranslatable, GUILayout.Width(150));
+                    if (isTranslatable != currentIsTranslatable)
                     {
-                        Debug.LogWarning("A TextMeshProUGUI object in the list is null or has been destroyed.");
-                        continue;
+                        translateComponent.IsTranslatable = isTranslatable;
+                        EditorUtility.SetDirty(translateComponent);
                     }
-        
-                    BeginHorizontal();
-        
-                    var translateComponent = translateObject.GetComponent<TranslationComponent>();
-                    var textMeshProComponent = translateObject.GetComponent<TextMeshProUGUI>();
-        
-                    if (translateComponent != null && textMeshProComponent != null)
+
+                    if (isTranslatable)
                     {
-                        List<string> keys = new List<string>(_translations.Keys);
-        
+                        Space(20);
                         int currentIndex = keys.IndexOf(translateComponent._localizationKey);
                         if (currentIndex < 0) currentIndex = 0;
-        
+                    
                         int selectedIndex = EditorGUILayout.Popup(
                             textMeshProComponent.name,
                             currentIndex,
                             keys.ToArray(),
-                            GUILayout.Width(400)
+                            GUILayout.Width(250)
                         );
-        
+
                         if (selectedIndex != currentIndex)
                         {
                             string selectedKey = keys[selectedIndex];
-        
                             translateComponent._localizationKey = selectedKey;
                             textMeshProComponent.text = GetTranslation(translateComponent._localizationKey);
                             EditorUtility.SetDirty(translateComponent);
                         }
                     }
-                    else
-                    {
-                        Debug.LogWarning("Missing TranslationComponent or TextMeshProUGUI on the object.");
-                    }
-        
-                    EndHorizontal();
                 }
+                else
+                {
+                    Debug.LogWarning("Missing TranslationComponent or TextMeshProUGUI on the object.");
+                }
+                EndHorizontal();
             }
-            else
-            {
-                Debug.LogWarning("_translateObjects list is null.");
-            }
-        
+            
             EndScrollView();
-        
-            if (GUILayout.Button("Refresh List"))
+            
+            if (Button("Refresh Text"))
             {
                 FindAllTranslateObjects();
             }
@@ -224,6 +233,10 @@ public class Localization : EditorWindow
                 if (obj.GetComponent<TranslationComponent>() != null)
                 {
                     _translateObjects.Add(obj);
+                }
+                else
+                {
+                    
                 }
             }
 
@@ -366,6 +379,9 @@ public class Localization : EditorWindow
     
     #endregion
     
+    // Csv
+    #region CSV
+    
     /*- Import CSV -*/
     private void ImportCsv()
     {
@@ -426,6 +442,52 @@ public class Localization : EditorWindow
             Debug.LogError($"Error importing CSV: {ex.Message}");
         }
     }
+
+    
+    private void ExportCsv()
+    {
+        string path = EditorUtility.SaveFilePanel("Export Localization CSV", "", "Localization.csv", "csv");
+        if (string.IsNullOrEmpty(path)) return;
+
+        try
+        {
+            // Préparer l'en-tête du CSV
+            List<string> lines = new List<string>();
+            string header = "Key," + string.Join(",", _languages);
+            lines.Add(header);
+
+            // Ajouter chaque clé et ses traductions
+            foreach (var entry in _translations)
+            {
+                string key = entry.Key;
+                List<string> row = new List<string> { key };
+
+                foreach (string language in _languages)
+                {
+                    if (entry.Value.TryGetValue(language, out string translation))
+                    {
+                        row.Add(translation);
+                    }
+                    else
+                    {
+                        row.Add(""); // Valeur vide si la traduction est absente
+                    }
+                }
+
+                lines.Add(string.Join(",", row));
+            }
+
+            // Écrire dans le fichier
+            File.WriteAllLines(path, lines);
+            Debug.Log($"CSV exported successfully to {path}");
+        }
+        catch (System.Exception ex)
+        {
+            Debug.LogError($"Error exporting CSV: {ex.Message}");
+        }
+    }
+
+    #endregion
     
     public static List<string> GetAllTranslationKeys()
     {

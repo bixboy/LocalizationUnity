@@ -20,24 +20,26 @@ public class TranslationComponentEditor : Editor
 
     public override void OnInspectorGUI()
     {
-        var keys = Localization.GetAllTranslationKeys();
-        EditorGUILayout.LabelField("Select a Translation Key", EditorStyles.boldLabel);
-
-        int currentIndex = keys.IndexOf(_translationComponent._localizationKey);
-        if (currentIndex < 0) currentIndex = 0;
-
-        int selectedIndex = EditorGUILayout.Popup("Translation Key", currentIndex, keys.ToArray());
-
-        if (selectedIndex != currentIndex)
+        if (_translationComponent.IsTranslatable)
         {
-            string selectedKey = keys[selectedIndex];
-            if (_translationComponent && _textComponent)
+            var keys = Localization.GetAllTranslationKeys();
+            EditorGUILayout.LabelField("Select a Translation Key", EditorStyles.boldLabel);
+
+            int currentIndex = keys.IndexOf(_translationComponent._localizationKey);
+            if (currentIndex < 0) currentIndex = 0;
+
+            int selectedIndex = EditorGUILayout.Popup("Translation Key", currentIndex, keys.ToArray());
+
+            if (selectedIndex != currentIndex)
             {
-                ChangeKey(selectedKey);
-                EditorUtility.SetDirty(target);
+                string selectedKey = keys[selectedIndex];
+                if (_translationComponent && _textComponent)
+                {
+                    ChangeKey(selectedKey);
+                    EditorUtility.SetDirty(target);
+                }
             }
         }
-
         base.OnInspectorGUI();
     }
 

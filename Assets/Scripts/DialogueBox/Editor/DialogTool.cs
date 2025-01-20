@@ -1,13 +1,14 @@
-using System.Collections.Generic;
 using TMPro;
-using Unity.VisualScripting.YamlDotNet.Core.Tokens;
 using UnityEngine;
 using UnityEditor;
 using UnityEngine.UI;
+using static UnityEngine.GUILayout;
+
 
 public class DialogTool : EditorWindow
 {
-    private DialogSO currentDialog;
+    private DialogSO _currentDialog;
+    private Vector2 _scrollPosition;
 
     [MenuItem("Tools/Dialogue Editor")]
     public static void ShowWindow()
@@ -18,10 +19,11 @@ public class DialogTool : EditorWindow
     private void OnGUI()
     {
         GUILayout.Label("Dialogue Editor", EditorStyles.boldLabel);
+        _scrollPosition = BeginScrollView(_scrollPosition, false, true);
 
-        currentDialog = (DialogSO)EditorGUILayout.ObjectField("Dialog ScriptableObject", currentDialog, typeof(DialogSO), false);
+        _currentDialog = (DialogSO)EditorGUILayout.ObjectField("Dialog ScriptableObject", _currentDialog, typeof(DialogSO), false);
 
-        if (currentDialog != null)
+        if (_currentDialog != null)
         {
             DisplayDialogueLines();
             DisplayAddButton();
@@ -40,20 +42,22 @@ public class DialogTool : EditorWindow
         {
             SavingChanges();
         }
+        
+        EndScrollView();
     }
 
     private void DisplayDialogueLines()
     {
-        for (int i = 0; i < currentDialog.dialogueLines.Count; i++)
+        for (int i = 0; i < _currentDialog.dialogueLines.Count; i++)
         {
-            var line = currentDialog.dialogueLines[i];
+            var line = _currentDialog.dialogueLines[i];
 
             EditorGUILayout.BeginVertical("Box");
 
             EditorGUILayout.BeginHorizontal();
             if (GUILayout.Button("X", GUILayout.Width(20)))
             {
-                currentDialog.dialogueLines.RemoveAt(i);
+                _currentDialog.dialogueLines.RemoveAt(i);
                 EditorGUILayout.EndHorizontal();
                 EditorGUILayout.EndVertical();
                 return; 
@@ -124,7 +128,7 @@ public class DialogTool : EditorWindow
     {
         if (GUILayout.Button("Add Dialogue Line"))
         {
-            currentDialog.dialogueLines.Add(new DialogSO.DialogueLine());
+            _currentDialog.dialogueLines.Add(new DialogSO.DialogueLine());
         }
     }
     
@@ -138,14 +142,14 @@ public class DialogTool : EditorWindow
             AssetDatabase.SaveAssets();
             EditorUtility.FocusProjectWindow();
             Selection.activeObject = newDialogSO;
-            currentDialog = newDialogSO;
+            _currentDialog = newDialogSO;
             Debug.Log("New DialogSO created at: " + path);
         }
     }
 
     private void SavingChanges()
     {
-        EditorUtility.SetDirty(currentDialog);
+        EditorUtility.SetDirty(_currentDialog);
         AssetDatabase.SaveAssets();
     }
 

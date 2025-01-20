@@ -7,7 +7,15 @@ public class TranslationComponent : MonoBehaviour
 {
     [HideInInspector]
     public string _localizationKey;
+    private bool _isTranslatable = true;
     private TMP_Text _textComponent;
+
+    public bool IsTranslatable
+    {
+        get => _isTranslatable;
+        
+        set => _isTranslatable = value;
+    }
 
     public void RefreshText() => UpdateLocalizedText();
 
@@ -38,7 +46,7 @@ public class TranslationComponent : MonoBehaviour
 
     private void UpdateLocalizedText()
     {
-        if (!string.IsNullOrEmpty(_localizationKey))
+        if (Application.isPlaying && !string.IsNullOrEmpty(_localizationKey))
         {
             _textComponent.text = LocalizationManager.Instance.GetTranslation(_localizationKey);
         }
