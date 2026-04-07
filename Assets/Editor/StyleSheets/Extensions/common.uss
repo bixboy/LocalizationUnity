@@ -1,0 +1,108 @@
+
+/* Flash Marker */
+.CameraFlashMarker
+{
+    width:16px;
+    height:16px;
+    background-image: resource("Marker_Flash");
+}
+
+.CameraFlashMarker:hover:focus:checked
+{
+    background-image: resource("Marker_Flash");
+}
+
+.CameraFlashMarker:checked
+{
+    background-image: resource("Marker_Flash");
+}
+
+/* FOV Marker */
+.CameraFOVMarker
+{
+    width:16px;
+    height:16px;
+    background-image: resource("Marker_Fov");
+}
+
+.CameraFOVMarker:hover:focus:checked
+{
+    background-image: resource("Marker_Fov");
+}
+
+.CameraFOVMarker:checked
+{
+    background-image: resource("Marker_Fov");
+}
+
+/* Look At Marker */
+.CameraLookAtSwitchMarker
+{
+    width:16px;
+    height:16px;
+    background-image: resource("Marker_LookAt");
+}
+
+.CameraLookAtSwitchMarker:hover:focus:checked
+{
+    background-image: resource("Marker_LookAt");
+}
+
+.CameraLookAtSwitchMarker:checked
+{
+    background-image: resource("Marker_LookAt");
+}
+
+/* Rail Switch Marker */
+.CameraRailSwitchMarker
+{
+    width:16px;
+    height:16px;
+    background-image: resource("Marker_Rail");
+}
+
+.CameraRailSwitchMarker:hover:focus:checked
+{
+    background-image: resource("Marker_Rail");
+}
+
+.CameraRailSwitchMarker:checked
+{
+    background-image: resource("Marker_Rail");
+}
+
+/* Shake Marker */
+.CameraShakeMarker
+{
+    width:16px;
+    height:16px;
+    background-image: resource("Marker_Shake");
+}
+
+.CameraShakeMarker:hover:focus:checked
+{
+    background-image: resource("Marker_Shake");
+}
+
+.CameraShakeMarker:checked
+{
+    background-image: resource("Marker_Shake");
+}
+
+/* Stop All Marker */
+.CameraStopAllMarker
+{
+    width:16px;
+    height:16px;
+    background-image: resource("Marker_Stop");
+}
+
+.CameraStopAllMarker:hover:focus:checked
+{
+    background-image: resource("Marker_Stop");
+}
+
+.CameraStopAllMarker:checked
+{
+    background-image: resource("Marker_Stop");
+}

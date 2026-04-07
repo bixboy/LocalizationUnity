@@ -1,0 +1,505 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &-8868191240790826909
+MonoBehaviour:
+  m_ObjectHideFlags: 1
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7e92547363eac4b49af4c60ada8421d3, type: 3}
+  m_Name: "Camera/\U0001F3AC Screen Flash"
+  m_EditorClassIdentifier: Assembly-CSharp::Metroma.Camera.Timeline.CameraFlashMarker
+  m_Time: 1.4166666666666667
+  flashColor: {r: 1, g: 1, b: 1, a: 1}
+  duration: 0.5
+--- !u!114 &-8086884868525950876
+MonoBehaviour:
+  m_ObjectHideFlags: 1
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7e92547363eac4b49af4c60ada8421d3, type: 3}
+  m_Name: "Camera/\U0001F3AC Screen Flash"
+  m_EditorClassIdentifier: Assembly-CSharp::Metroma.Camera.Timeline.CameraFlashMarker
+  m_Time: 1.9166666666666667
+  flashColor: {r: 1, g: 1, b: 1, a: 1}
+  duration: 0.5
+--- !u!114 &-7412447437939914224
+MonoBehaviour:
+  m_ObjectHideFlags: 1
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 99c5410f3c6d603428616b7e7424c36e, type: 3}
+  m_Name: CameraToolClip
+  m_EditorClassIdentifier: Assembly-CSharp::Metroma.Camera.Timeline.CameraToolClip
+  template:
+    startProgress: 0
+    endProgress: 0.5
+    easingCurve:
+      serializedVersion: 2
+      m_Curve:
+      - serializedVersion: 3
+        time: 0
+        value: 0
+        inSlope: 0
+        outSlope: 0
+        tangentMode: 0
+        weightedMode: 0
+        inWeight: 0
+        outWeight: 0
+      - serializedVersion: 3
+        time: 1
+        value: 1
+        inSlope: 0
+        outSlope: 0
+        tangentMode: 0
+        weightedMode: 0
+        inWeight: 0
+        outWeight: 0
+      m_PreInfinity: 2
+      m_PostInfinity: 2
+      m_RotationOrder: 4
+    lookAtWeight: 1
+--- !u!114 &-6980579495747693402
+MonoBehaviour:
+  m_ObjectHideFlags: 1
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7e92547363eac4b49af4c60ada8421d3, type: 3}
+  m_Name: "Camera/\U0001F3AC Screen Flash"
+  m_EditorClassIdentifier: Assembly-CSharp::Metroma.Camera.Timeline.CameraFlashMarker
+  m_Time: 2.0833333333333335
+  flashColor: {r: 1, g: 1, b: 1, a: 1}
+  duration: 10
+--- !u!114 &-6728880901229576363
+MonoBehaviour:
+  m_ObjectHideFlags: 1
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7e92547363eac4b49af4c60ada8421d3, type: 3}
+  m_Name: "Camera/\U0001F3AC Screen Flash"
+  m_EditorClassIdentifier: Assembly-CSharp::Metroma.Camera.Timeline.CameraFlashMarker
+  m_Time: 1.0833333333333333
+  flashColor: {r: 1, g: 1, b: 1, a: 1}
+  duration: 0.5
+--- !u!114 &-4722696086314492726
+MonoBehaviour:
+  m_ObjectHideFlags: 1
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 44dd9db70ee078d42a7c7d7ef999a3bf, type: 3}
+  m_Name: Camera Event
+  m_EditorClassIdentifier: Assembly-CSharp::Metroma.Camera.Timeline.CameraEventMarker
+  m_Time: 0.5166666666666667
+  eventName: TestAnim
+  retroactive: 0
+  emitOnce: 1
+--- !u!114 &-4486557885104681700
+MonoBehaviour:
+  m_ObjectHideFlags: 1
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7e92547363eac4b49af4c60ada8421d3, type: 3}
+  m_Name: "Camera/\U0001F3AC Screen Flash"
+  m_EditorClassIdentifier: Assembly-CSharp::Metroma.Camera.Timeline.CameraFlashMarker
+  m_Time: 0.8333333333333334
+  flashColor: {r: 1, g: 1, b: 1, a: 1}
+  duration: 0.5
+--- !u!114 &-3554143816871445108
+MonoBehaviour:
+  m_ObjectHideFlags: 1
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7e92547363eac4b49af4c60ada8421d3, type: 3}
+  m_Name: "Camera/\U0001F3AC Screen Flash"
+  m_EditorClassIdentifier: Assembly-CSharp::Metroma.Camera.Timeline.CameraFlashMarker
+  m_Time: 1.75
+  flashColor: {r: 1, g: 1, b: 1, a: 1}
+  duration: 0.5
+--- !u!114 &-2335655746803966686
+MonoBehaviour:
+  m_ObjectHideFlags: 1
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b1cb6a6ee1fa8a844b54c6e6ee8e3398, type: 3}
+  m_Name: "Camera/\U0001F3AC Pose Transition"
+  m_EditorClassIdentifier: Assembly-CSharp::Metroma.Camera.Timeline.CameraPoseMarker
+  m_Time: 4.266666666666667
+  position: {x: 0, y: 0, z: 0}
+  rotationEuler: {x: 0, y: 0, z: 0}
+  fov: 60
+  distance: 0
+  duration: 3
+  curve:
+    serializedVersion: 2
+    m_Curve:
+    - serializedVersion: 3
+      time: 0
+      value: 0
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0
+      outWeight: 0
+    - serializedVersion: 3
+      time: 1
+      value: 1
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0
+      outWeight: 0
+    m_PreInfinity: 2
+    m_PostInfinity: 2
+    m_RotationOrder: 4
+  action: 2
+--- !u!114 &-1539503224544185737
+MonoBehaviour:
+  m_ObjectHideFlags: 1
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: da4426d264d5a874ebb7955f6fbfaa43, type: 3}
+  m_Name: "Camera/\U0001F4A5 Camera Shake"
+  m_EditorClassIdentifier: Assembly-CSharp::Metroma.Camera.Timeline.CameraShakeMarker
+  m_Time: 3.816666666666667
+  profile: {fileID: 0}
+  intensity: 0.5
+  duration: 0.5
+  roughness: 1
+  fadeOut: 1
+--- !u!114 &-153940889212784977
+MonoBehaviour:
+  m_ObjectHideFlags: 1
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: da4426d264d5a874ebb7955f6fbfaa43, type: 3}
+  m_Name: "Camera/\U0001F4A5 Camera Shake"
+  m_EditorClassIdentifier: Assembly-CSharp::Metroma.Camera.Timeline.CameraShakeMarker
+  m_Time: 2.9166666666666665
+  profile: {fileID: 0}
+  intensity: 0.5
+  duration: 0.5
+  roughness: 1
+  fadeOut: 1
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: bfda56da833e2384a9677cd3c976a436, type: 3}
+  m_Name: TestCameraTimeline
+  m_EditorClassIdentifier: Unity.Timeline::UnityEngine.Timeline.TimelineAsset
+  m_Version: 0
+  m_Tracks:
+  - {fileID: 8395023584946261708}
+  m_FixedDuration: 0
+  m_EditorSettings:
+    m_Framerate: 60
+    m_ScenePreview: 1
+  m_DurationMode: 0
+  m_MarkerTrack: {fileID: 0}
+--- !u!114 &2040257656741876037
+MonoBehaviour:
+  m_ObjectHideFlags: 1
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7e92547363eac4b49af4c60ada8421d3, type: 3}
+  m_Name: "Camera/\U0001F3AC Screen Flash"
+  m_EditorClassIdentifier: Assembly-CSharp::Metroma.Camera.Timeline.CameraFlashMarker
+  m_Time: 1.25
+  flashColor: {r: 1, g: 1, b: 1, a: 1}
+  duration: 0.5
+--- !u!114 &3142292190833688430
+MonoBehaviour:
+  m_ObjectHideFlags: 1
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e44f623b1482f424f852f7d9315232a3, type: 3}
+  m_Name: "Camera/\U0001F4D0 Stop all modifiers"
+  m_EditorClassIdentifier: Assembly-CSharp::Metroma.Camera.Timeline.CameraStopAllModifiersMarker
+  m_Time: 2.5
+--- !u!114 &3924157432745184588
+MonoBehaviour:
+  m_ObjectHideFlags: 1
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 99c5410f3c6d603428616b7e7424c36e, type: 3}
+  m_Name: CameraToolClip
+  m_EditorClassIdentifier: Assembly-CSharp::Metroma.Camera.Timeline.CameraToolClip
+  template:
+    startProgress: 0.5
+    endProgress: 1
+    easingCurve:
+      serializedVersion: 2
+      m_Curve:
+      - serializedVersion: 3
+        time: 0
+        value: 0
+        inSlope: 0
+        outSlope: 0
+        tangentMode: 0
+        weightedMode: 0
+        inWeight: 0
+        outWeight: 0
+      - serializedVersion: 3
+        time: 1
+        value: 1
+        inSlope: 0
+        outSlope: 0
+        tangentMode: 0
+        weightedMode: 0
+        inWeight: 0
+        outWeight: 0
+      m_PreInfinity: 2
+      m_PostInfinity: 2
+      m_RotationOrder: 4
+    lookAtWeight: 1
+--- !u!114 &8395023584946261708
+MonoBehaviour:
+  m_ObjectHideFlags: 1
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d5f90de6b5cfa664aafefee9bc31b64c, type: 3}
+  m_Name: Camera Tool Track
+  m_EditorClassIdentifier: Assembly-CSharp::Metroma.Camera.Timeline.CameraToolTrack
+  m_Version: 3
+  m_AnimClip: {fileID: 0}
+  m_Locked: 0
+  m_Muted: 0
+  m_CustomPlayableFullTypename: 
+  m_Curves: {fileID: 0}
+  m_Parent: {fileID: 11400000}
+  m_Children: []
+  m_Clips:
+  - m_Version: 1
+    m_Start: 0
+    m_ClipIn: 0
+    m_Asset: {fileID: -7412447437939914224}
+    m_Duration: 5
+    m_TimeScale: 1
+    m_ParentTrack: {fileID: 8395023584946261708}
+    m_EaseInDuration: 0
+    m_EaseOutDuration: 0
+    m_BlendInDuration: -1
+    m_BlendOutDuration: -1
+    m_MixInCurve:
+      serializedVersion: 2
+      m_Curve:
+      - serializedVersion: 3
+        time: 0
+        value: 0
+        inSlope: 0
+        outSlope: 0
+        tangentMode: 0
+        weightedMode: 0
+        inWeight: 0
+        outWeight: 0
+      - serializedVersion: 3
+        time: 1
+        value: 1
+        inSlope: 0
+        outSlope: 0
+        tangentMode: 0
+        weightedMode: 0
+        inWeight: 0
+        outWeight: 0
+      m_PreInfinity: 2
+      m_PostInfinity: 2
+      m_RotationOrder: 4
+    m_MixOutCurve:
+      serializedVersion: 2
+      m_Curve:
+      - serializedVersion: 3
+        time: 0
+        value: 1
+        inSlope: 0
+        outSlope: 0
+        tangentMode: 0
+        weightedMode: 0
+        inWeight: 0
+        outWeight: 0
+      - serializedVersion: 3
+        time: 1
+        value: 0
+        inSlope: 0
+        outSlope: 0
+        tangentMode: 0
+        weightedMode: 0
+        inWeight: 0
+        outWeight: 0
+      m_PreInfinity: 2
+      m_PostInfinity: 2
+      m_RotationOrder: 4
+    m_BlendInCurveMode: 0
+    m_BlendOutCurveMode: 0
+    m_ExposedParameterNames: []
+    m_AnimationCurves: {fileID: 0}
+    m_Recordable: 0
+    m_PostExtrapolationMode: 0
+    m_PreExtrapolationMode: 0
+    m_PostExtrapolationTime: 0
+    m_PreExtrapolationTime: 0
+    m_DisplayName: "Node 0 \u2192 1"
+  - m_Version: 1
+    m_Start: 10
+    m_ClipIn: 0
+    m_Asset: {fileID: 3924157432745184588}
+    m_Duration: 1
+    m_TimeScale: 1
+    m_ParentTrack: {fileID: 8395023584946261708}
+    m_EaseInDuration: 0
+    m_EaseOutDuration: 0
+    m_BlendInDuration: -1
+    m_BlendOutDuration: -1
+    m_MixInCurve:
+      serializedVersion: 2
+      m_Curve:
+      - serializedVersion: 3
+        time: 0
+        value: 0
+        inSlope: 0
+        outSlope: 0
+        tangentMode: 0
+        weightedMode: 0
+        inWeight: 0
+        outWeight: 0
+      - serializedVersion: 3
+        time: 1
+        value: 1
+        inSlope: 0
+        outSlope: 0
+        tangentMode: 0
+        weightedMode: 0
+        inWeight: 0
+        outWeight: 0
+      m_PreInfinity: 2
+      m_PostInfinity: 2
+      m_RotationOrder: 4
+    m_MixOutCurve:
+      serializedVersion: 2
+      m_Curve:
+      - serializedVersion: 3
+        time: 0
+        value: 1
+        inSlope: 0
+        outSlope: 0
+        tangentMode: 0
+        weightedMode: 0
+        inWeight: 0
+        outWeight: 0
+      - serializedVersion: 3
+        time: 1
+        value: 0
+        inSlope: 0
+        outSlope: 0
+        tangentMode: 0
+        weightedMode: 0
+        inWeight: 0
+        outWeight: 0
+      m_PreInfinity: 2
+      m_PostInfinity: 2
+      m_RotationOrder: 4
+    m_BlendInCurveMode: 0
+    m_BlendOutCurveMode: 0
+    m_ExposedParameterNames: []
+    m_AnimationCurves: {fileID: 0}
+    m_Recordable: 0
+    m_PostExtrapolationMode: 0
+    m_PreExtrapolationMode: 0
+    m_PostExtrapolationTime: 0
+    m_PreExtrapolationTime: 0
+    m_DisplayName: "Node 1 \u2192 2"
+  m_Markers:
+    m_Objects:
+    - {fileID: -4722696086314492726}
+    - {fileID: 9207597567705857916}
+    - {fileID: -8868191240790826909}
+    - {fileID: -6728880901229576363}
+    - {fileID: -8086884868525950876}
+    - {fileID: -4486557885104681700}
+    - {fileID: -6980579495747693402}
+    - {fileID: -3554143816871445108}
+    - {fileID: 2040257656741876037}
+    - {fileID: 3142292190833688430}
+    - {fileID: -153940889212784977}
+    - {fileID: -1539503224544185737}
+    - {fileID: -2335655746803966686}
+--- !u!114 &9207597567705857916
+MonoBehaviour:
+  m_ObjectHideFlags: 1
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7e92547363eac4b49af4c60ada8421d3, type: 3}
+  m_Name: "Camera/\U0001F3AC Screen Flash"
+  m_EditorClassIdentifier: Assembly-CSharp::Metroma.Camera.Timeline.CameraFlashMarker
+  m_Time: 1.5833333333333333
+  flashColor: {r: 1, g: 1, b: 1, a: 1}
+  duration: 0.5
