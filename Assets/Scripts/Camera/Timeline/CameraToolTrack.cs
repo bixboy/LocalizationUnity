@@ -2,7 +2,7 @@ using UnityEngine;
 using UnityEngine.Playables;
 using UnityEngine.Timeline;
 
-namespace Metroma.Camera.Timeline
+namespace Metroma.CameraTool.Timeline
 {
     /// <summary>
     /// Custom Timeline track that drives a <see cref="CameraTool"/> component.

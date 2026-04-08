@@ -4,7 +4,7 @@ using UnityEngine;
 using UnityEngine.Playables;
 using UnityEngine.Timeline;
 
-namespace Metroma.Camera.Timeline
+namespace Metroma.CameraTool.Timeline
 {
     /// <summary>
     /// Timeline marker: switches the active rail in the CameraTool's spline chain.

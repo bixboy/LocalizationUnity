@@ -1,6 +1,6 @@
 using UnityEngine;
 
-namespace Metroma.Camera.Modifiers
+namespace Metroma.CameraTool.Modifiers
 {
 
     public static class CameraModifiers
@@ -10,7 +10,7 @@ namespace Metroma.Camera.Modifiers
         // ══════════════════════════════════════════════════════════════
 
         /// <summary> Applies a continuous Perlin-noise shake to the camera. </summary>
-        public static void DoShake(this UnityEngine.Camera camera, float intensity, float duration, float roughness = 1f, bool fadeOut = true)
+        public static void DoShake(this Camera camera, float intensity, float duration, float roughness = 1f, bool fadeOut = true)
         {
             var h = GetOrAddModifierHandler(camera);
             if (h != null)
@@ -18,7 +18,7 @@ namespace Metroma.Camera.Modifiers
         }
 
         /// <summary> Applies a shake using settings from a profile. </summary>
-        public static void DoShake(this UnityEngine.Camera camera, CameraShakeProfile profile, float duration)
+        public static void DoShake(this Camera camera, CameraShakeProfile profile, float duration)
         {
             if (profile == null)
                 return;
@@ -27,7 +27,7 @@ namespace Metroma.Camera.Modifiers
         }
 
         /// <summary> Applies a shake that scales down based on distance from the source. </summary>
-        public static void DoShakeAt(this UnityEngine.Camera camera, Vector3 sourcePos, float maxIntensity, float duration, float radius, float falloff = 1f)
+        public static void DoShakeAt(this Camera camera, Vector3 sourcePos, float maxIntensity, float duration, float radius, float falloff = 1f)
         {
             float dist = Vector3.Distance(camera.transform.position, sourcePos);
             if (dist > radius)
@@ -40,7 +40,7 @@ namespace Metroma.Camera.Modifiers
         }
 
         /// <summary> Applies a profile-based shake attenuated by distance. </summary>
-        public static void DoShakeAt(this UnityEngine.Camera camera, Vector3 sourcePos, CameraShakeProfile profile, float duration, float radius, float falloff = 1f)
+        public static void DoShakeAt(this Camera camera, Vector3 sourcePos, CameraShakeProfile profile, float duration, float radius, float falloff = 1f)
         {
             if (profile == null)
                 return;
@@ -49,7 +49,7 @@ namespace Metroma.Camera.Modifiers
         }
 
         /// <summary> Applies a strong directional impact (e.g., weapon recoil, landing) that drops off smoothly. </summary>
-        public static void DoImpact(this UnityEngine.Camera camera, Vector3 direction, float intensity, float duration)
+        public static void DoImpact(this Camera camera, Vector3 direction, float intensity, float duration)
         {
             var h = GetOrAddModifierHandler(camera);
             if (h != null)
@@ -61,7 +61,7 @@ namespace Metroma.Camera.Modifiers
         // ══════════════════════════════════════════════════════════════
 
         /// <summary> Smoothly transitions the Field of View. </summary>
-        public static void DoFOVTransition(this UnityEngine.Camera camera, float targetFOV, float duration, AnimationCurve curve = null)
+        public static void DoFOVTransition(this Camera camera, float targetFOV, float duration, AnimationCurve curve = null)
         {
             var h = GetOrAddModifierHandler(camera);
             if (h != null)
@@ -69,7 +69,7 @@ namespace Metroma.Camera.Modifiers
         }
 
         /// <summary> Repeatedly pulses the Field of View back and forth (e.g., breathing effect). </summary>
-        public static void DoFOVPulse(this UnityEngine.Camera camera, float amplitude, float frequency, float duration)
+        public static void DoFOVPulse(this Camera camera, float amplitude, float frequency, float duration)
         {
             var h = GetOrAddModifierHandler(camera);
             if (h != null)
@@ -77,7 +77,7 @@ namespace Metroma.Camera.Modifiers
         }
 
         /// <summary> Pushes the camera position while expanding the FOV to keep the subject framed (Vertigo effect). </summary>
-        public static void DoDollyZoom(this UnityEngine.Camera camera, float pushDistance, float targetFOV, float duration, AnimationCurve curve = null)
+        public static void DoDollyZoom(this Camera camera, float pushDistance, float targetFOV, float duration, AnimationCurve curve = null)
         {
             var h = GetOrAddModifierHandler(camera);
             if (h != null)
@@ -85,7 +85,7 @@ namespace Metroma.Camera.Modifiers
         }
 
         /// <summary> Pushes the camera using settings from a profile. </summary>
-        public static void DoDollyZoom(this UnityEngine.Camera camera, float pushDistance, float targetFOV, float duration, CameraDollyProfile profile)
+        public static void DoDollyZoom(this Camera camera, float pushDistance, float targetFOV, float duration, CameraDollyProfile profile)
         {
             if (profile == null)
                 return;
@@ -98,7 +98,7 @@ namespace Metroma.Camera.Modifiers
         // ══════════════════════════════════════════════════════════════
 
         /// <summary> Adds a temporary positional offset that reverts back to zero when duration expires. </summary>
-        public static void AddPositionOffset(this UnityEngine.Camera camera, Vector3 localOffset, float duration, AnimationCurve curve = null)
+        public static void AddPositionOffset(this Camera camera, Vector3 localOffset, float duration, AnimationCurve curve = null)
         {
             var h = GetOrAddModifierHandler(camera);
             if (h != null)
@@ -106,7 +106,7 @@ namespace Metroma.Camera.Modifiers
         }
 
         /// <summary> Adds a dual-phase positional offset (Move + Return). </summary>
-        public static void AddPositionOffset(this UnityEngine.Camera camera, Vector3 localOffset, float mainDuration, AnimationCurve mainCurve, float returnDuration, AnimationCurve returnCurve, bool invertReturn = true)
+        public static void AddPositionOffset(this Camera camera, Vector3 localOffset, float mainDuration, AnimationCurve mainCurve, float returnDuration, AnimationCurve returnCurve, bool invertReturn = true)
         {
             var h = GetOrAddModifierHandler(camera);
             if (h != null)
@@ -114,7 +114,7 @@ namespace Metroma.Camera.Modifiers
         }
 
         /// <summary> Adds a temporary rotational offset (Euler angles) that reverts back to zero when duration expires. </summary>
-        public static void AddRotationOffset(this UnityEngine.Camera camera, Vector3 localEulerAngles, float duration, AnimationCurve curve = null)
+        public static void AddRotationOffset(this Camera camera, Vector3 localEulerAngles, float duration, AnimationCurve curve = null)
         {
             var h = GetOrAddModifierHandler(camera);
             if (h != null)
@@ -122,7 +122,7 @@ namespace Metroma.Camera.Modifiers
         }
 
         /// <summary> Adds a dual-phase rotational offset (Move + Return). </summary>
-        public static void AddRotationOffset(this UnityEngine.Camera camera, Vector3 localEulerAngles, float mainDuration, AnimationCurve mainCurve, float returnDuration, AnimationCurve returnCurve, bool invertReturn = true)
+        public static void AddRotationOffset(this Camera camera, Vector3 localEulerAngles, float mainDuration, AnimationCurve mainCurve, float returnDuration, AnimationCurve returnCurve, bool invertReturn = true)
         {
             var h = GetOrAddModifierHandler(camera);
             if (h != null)
@@ -130,7 +130,7 @@ namespace Metroma.Camera.Modifiers
         }
 
         /// <summary> Activates a continuous organic "Hand-held" breathing effect on the camera. </summary>
-        public static void SetHandheld(this UnityEngine.Camera camera, bool active, float amplitude = 1f, float frequency = 1f)
+        public static void SetHandheld(this Camera camera, bool active, float amplitude = 1f, float frequency = 1f)
         {
             var h = GetOrAddModifierHandler(camera);
             if (h != null)
@@ -138,7 +138,7 @@ namespace Metroma.Camera.Modifiers
         }
 
         /// <summary> Sets handheld effect using a profile. </summary>
-        public static void SetHandheld(this UnityEngine.Camera camera, bool active, CameraHandheldProfile profile)
+        public static void SetHandheld(this Camera camera, bool active, CameraHandheldProfile profile)
         {
             if (profile == null)
                 return;
@@ -147,7 +147,7 @@ namespace Metroma.Camera.Modifiers
         }
 
         /// <summary> Adds a temporary continuous roll wave (Z-axis Sine) to the camera (Drunk/Poison Wobble). </summary>
-        public static void DoWobble(this UnityEngine.Camera camera, float amplitude, float frequency, float duration)
+        public static void DoWobble(this Camera camera, float amplitude, float frequency, float duration)
         {
             var h = GetOrAddModifierHandler(camera);
             if (h != null)
@@ -155,14 +155,14 @@ namespace Metroma.Camera.Modifiers
         }
 
         /// <summary> Forces the camera to temporarily Look At a specific target, overriding base behavior, then nicely releases it. </summary>
-        public static void SetTemporaryLookAt(this UnityEngine.Camera camera, Transform target, float duration, AnimationCurve focusCurve = null)
+        public static void SetTemporaryLookAt(this Camera camera, Transform target, float duration, AnimationCurve focusCurve = null)
         {
             var h = GetOrAddModifierHandler(camera);
             if (h != null)
                 h.SetTemporaryLookAt(target, duration, focusCurve);
         }
 
-        public static void SetDutchAngle(this UnityEngine.Camera camera, float targetAngleZ, float duration, AnimationCurve curve = null)
+        public static void SetDutchAngle(this Camera camera, float targetAngleZ, float duration, AnimationCurve curve = null)
         {
             var h = GetOrAddModifierHandler(camera);
             if (h != null)
@@ -174,14 +174,14 @@ namespace Metroma.Camera.Modifiers
         // ══════════════════════════════════════════════════════════════
 
         /// <summary> Performs a solid color screen flash (e.g. Damage, Camera Flash). Uses a hidden UI Overlay. </summary>
-        public static void DoFlash(this UnityEngine.Camera camera, Color flashColor, float duration)
+        public static void DoFlash(this Camera camera, Color flashColor, float duration)
         {
             var h = GetOrAddVfxHandler(camera);
             if (h != null)
                 h.DoFlash(flashColor, duration);
         }
 
-        public static void DoHitStop(this UnityEngine.Camera camera, float duration, float timeScale = 0.05f)
+        public static void DoHitStop(this Camera camera, float duration, float timeScale = 0.05f)
         {
             var h = GetOrAddVfxHandler(camera);
             if (h != null)
@@ -189,7 +189,7 @@ namespace Metroma.Camera.Modifiers
         }
 
         /// <summary> Performs a smooth Depth of Field transition (Rack Focus). Requires URP. </summary>
-        public static void DoDepthOfFieldFocus(this UnityEngine.Camera camera, float targetDistance, float duration, AnimationCurve curve = null)
+        public static void DoDepthOfFieldFocus(this Camera camera, float targetDistance, float duration, AnimationCurve curve = null)
         {
             var h = GetOrAddVfxHandler(camera);
             if (h != null)
@@ -197,7 +197,7 @@ namespace Metroma.Camera.Modifiers
         }
 
         /// <summary> Performs a chromatic aberration impact pulse. Requires URP. </summary>
-        public static void DoChromaticAberration(this UnityEngine.Camera camera, float intensity, float duration)
+        public static void DoChromaticAberration(this Camera camera, float intensity, float duration)
         {
             var h = GetOrAddVfxHandler(camera);
             if (h != null)
@@ -205,7 +205,7 @@ namespace Metroma.Camera.Modifiers
         }
 
         /// <summary> Enables real-time depth of field sync to a target transform. </summary>
-        public static void SetAutoFocus(this UnityEngine.Camera camera, bool enabled, Transform target = null)
+        public static void SetAutoFocus(this Camera camera, bool enabled, Transform target = null)
         {
             var h = GetOrAddVfxHandler(camera);
             if (h != null)
@@ -217,10 +217,10 @@ namespace Metroma.Camera.Modifiers
         // ══════════════════════════════════════════════════════════════
 
         /// <summary> Instantly stops all active effects and zeros out offsets. </summary>
-        public static void StopAllCameraModifiers(this UnityEngine.Camera camera)
+        public static void StopAllCameraModifiers(this Camera camera)
         {
             if (camera == null)
-                camera = UnityEngine.Camera.main;
+                camera = Camera.main;
             
             if (camera == null)
                 return;
@@ -233,16 +233,16 @@ namespace Metroma.Camera.Modifiers
         }
 
         /// <summary> Smoothly interpolates active offsets back to zero over a specified duration. </summary>
-        public static void ClearOffsetsSmoothly(this UnityEngine.Camera camera, float fadeDuration)
+        public static void ClearOffsetsSmoothly(this Camera camera, float fadeDuration)
         {
             if (camera.TryGetComponent<CameraModifierHandler>(out var handler))
                 handler.ClearOffsetsSmoothly(fadeDuration);
         }
 
-        private static CameraModifierHandler GetOrAddModifierHandler(this UnityEngine.Camera camera)
+        private static CameraModifierHandler GetOrAddModifierHandler(this Camera camera)
         {
             if (camera == null)
-                camera = UnityEngine.Camera.main;
+                camera = Camera.main;
             
             if (camera == null)
                 return null;
@@ -253,10 +253,10 @@ namespace Metroma.Camera.Modifiers
             return handler;
         }
 
-        private static CameraVisualEffectsHandler GetOrAddVfxHandler(this UnityEngine.Camera camera)
+        private static CameraVisualEffectsHandler GetOrAddVfxHandler(this Camera camera)
         {
             if (camera == null)
-                camera = UnityEngine.Camera.main;
+                camera = Camera.main;
             
             if (camera == null)
                 return null;

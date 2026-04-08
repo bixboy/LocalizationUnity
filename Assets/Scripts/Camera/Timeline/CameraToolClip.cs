@@ -3,7 +3,7 @@ using UnityEngine;
 using UnityEngine.Playables;
 using UnityEngine.Timeline;
 
-namespace Metroma.Camera.Timeline
+namespace Metroma.CameraTool.Timeline
 {
     /// <summary>
     /// Timeline clip asset that drives <see cref="CameraTool"/> along a spline segment.

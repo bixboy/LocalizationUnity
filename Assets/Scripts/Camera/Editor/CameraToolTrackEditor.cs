@@ -2,9 +2,9 @@ using UnityEngine;
 using UnityEditor;
 using UnityEditor.Timeline;
 using UnityEngine.Timeline;
-using Metroma.Camera.Timeline;
+using Metroma.CameraTool.Timeline;
 
-namespace Metroma.Camera.Editor
+namespace Metroma.CameraTool.Editor
 {
     /// <summary>
     /// Custom track editor for <see cref="CameraToolTrack"/>.

@@ -4,7 +4,7 @@ using UnityEngine.UI;
 using UnityEngine.Rendering;
 using UnityEngine.Rendering.Universal;
 
-namespace Metroma.Camera.Modifiers
+namespace Metroma.CameraTool.Modifiers
 {
     /// <summary>
     /// Handles camera-centric visual effects like Screen Flashes and Hit Stops (TimeScale).

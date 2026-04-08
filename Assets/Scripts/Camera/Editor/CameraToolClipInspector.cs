@@ -1,8 +1,8 @@
 using UnityEngine;
 using UnityEditor;
-using Metroma.Camera.Timeline;
+using Metroma.CameraTool.Timeline;
 
-namespace Metroma.Camera.Editor
+namespace Metroma.CameraTool.Editor
 {
     /// <summary>
     /// Custom Inspector displayed when a <see cref="CameraToolClip"/> is selected

@@ -3,7 +3,7 @@ using UnityEngine;
 using UnityEngine.Playables;
 using UnityEngine.Timeline;
 
-namespace Metroma.Camera.Timeline
+namespace Metroma.CameraTool.Timeline
 {
     /// <summary>
     /// Base class for all Camera Markers.

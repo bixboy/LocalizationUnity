@@ -3,7 +3,7 @@ using System.ComponentModel;
 using UnityEngine;
 using UnityEngine.Timeline;
 
-namespace Metroma.Camera.Timeline
+namespace Metroma.CameraTool.Timeline
 {
     /// <summary>
     /// Timeline marker that triggers a transition to another cinematic chapter.

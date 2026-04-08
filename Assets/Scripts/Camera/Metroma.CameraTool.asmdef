@@ -1,0 +1,21 @@
+{
+    "name": "Metroma.CameraTool",
+    "rootNamespace": "Metroma.CameraTool",
+    "references": [
+        "Dreamteck.Splines",
+        "Unity.Timeline",
+        "Unity.InputSystem",
+        "NaughtyAttributes.Core",
+        "Unity.RenderPipelines.Core.Runtime",
+        "Unity.RenderPipelines.Universal.Runtime"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

@@ -11,7 +11,7 @@ MonoBehaviour:
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 7e92547363eac4b49af4c60ada8421d3, type: 3}
   m_Name: "Camera/\U0001F3AC Screen Flash"
-  m_EditorClassIdentifier: Assembly-CSharp::Metroma.Camera.Timeline.CameraFlashMarker
+  m_EditorClassIdentifier: Assembly-CSharp::Metroma.CameraTool.Timeline.CameraFlashMarker
   m_Time: 1.4166666666666667
   flashColor: {r: 1, g: 1, b: 1, a: 1}
   duration: 0.5
@@ -26,7 +26,7 @@ MonoBehaviour:
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 7e92547363eac4b49af4c60ada8421d3, type: 3}
   m_Name: "Camera/\U0001F3AC Screen Flash"
-  m_EditorClassIdentifier: Assembly-CSharp::Metroma.Camera.Timeline.CameraFlashMarker
+  m_EditorClassIdentifier: Assembly-CSharp::Metroma.CameraTool.Timeline.CameraFlashMarker
   m_Time: 1.9166666666666667
   flashColor: {r: 1, g: 1, b: 1, a: 1}
   duration: 0.5
@@ -41,7 +41,7 @@ MonoBehaviour:
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 99c5410f3c6d603428616b7e7424c36e, type: 3}
   m_Name: CameraToolClip
-  m_EditorClassIdentifier: Assembly-CSharp::Metroma.Camera.Timeline.CameraToolClip
+  m_EditorClassIdentifier: Assembly-CSharp::Metroma.CameraTool.Timeline.CameraToolClip
   template:
     startProgress: 0
     endProgress: 0.5
@@ -81,8 +81,8 @@ MonoBehaviour:
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 7e92547363eac4b49af4c60ada8421d3, type: 3}
   m_Name: "Camera/\U0001F3AC Screen Flash"
-  m_EditorClassIdentifier: Assembly-CSharp::Metroma.Camera.Timeline.CameraFlashMarker
-  m_Time: 2.0833333333333335
+  m_EditorClassIdentifier: Assembly-CSharp::Metroma.CameraTool.Timeline.CameraFlashMarker
+  m_Time: 0.9166666666666666
   flashColor: {r: 1, g: 1, b: 1, a: 1}
   duration: 10
 --- !u!114 &-6728880901229576363
@@ -96,7 +96,7 @@ MonoBehaviour:
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 7e92547363eac4b49af4c60ada8421d3, type: 3}
   m_Name: "Camera/\U0001F3AC Screen Flash"
-  m_EditorClassIdentifier: Assembly-CSharp::Metroma.Camera.Timeline.CameraFlashMarker
+  m_EditorClassIdentifier: Assembly-CSharp::Metroma.CameraTool.Timeline.CameraFlashMarker
   m_Time: 1.0833333333333333
   flashColor: {r: 1, g: 1, b: 1, a: 1}
   duration: 0.5
@@ -111,7 +111,7 @@ MonoBehaviour:
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 44dd9db70ee078d42a7c7d7ef999a3bf, type: 3}
   m_Name: Camera Event
-  m_EditorClassIdentifier: Assembly-CSharp::Metroma.Camera.Timeline.CameraEventMarker
+  m_EditorClassIdentifier: Assembly-CSharp::Metroma.CameraTool.Timeline.CameraEventMarker
   m_Time: 0.5166666666666667
   eventName: TestAnim
   retroactive: 0
@@ -127,7 +127,7 @@ MonoBehaviour:
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 7e92547363eac4b49af4c60ada8421d3, type: 3}
   m_Name: "Camera/\U0001F3AC Screen Flash"
-  m_EditorClassIdentifier: Assembly-CSharp::Metroma.Camera.Timeline.CameraFlashMarker
+  m_EditorClassIdentifier: Assembly-CSharp::Metroma.CameraTool.Timeline.CameraFlashMarker
   m_Time: 0.8333333333333334
   flashColor: {r: 1, g: 1, b: 1, a: 1}
   duration: 0.5
@@ -142,7 +142,7 @@ MonoBehaviour:
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 7e92547363eac4b49af4c60ada8421d3, type: 3}
   m_Name: "Camera/\U0001F3AC Screen Flash"
-  m_EditorClassIdentifier: Assembly-CSharp::Metroma.Camera.Timeline.CameraFlashMarker
+  m_EditorClassIdentifier: Assembly-CSharp::Metroma.CameraTool.Timeline.CameraFlashMarker
   m_Time: 1.75
   flashColor: {r: 1, g: 1, b: 1, a: 1}
   duration: 0.5
@@ -157,7 +157,7 @@ MonoBehaviour:
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: b1cb6a6ee1fa8a844b54c6e6ee8e3398, type: 3}
   m_Name: "Camera/\U0001F3AC Pose Transition"
-  m_EditorClassIdentifier: Assembly-CSharp::Metroma.Camera.Timeline.CameraPoseMarker
+  m_EditorClassIdentifier: Assembly-CSharp::Metroma.CameraTool.Timeline.CameraPoseMarker
   m_Time: 4.266666666666667
   position: {x: 0, y: 0, z: 0}
   rotationEuler: {x: 0, y: 0, z: 0}
@@ -200,7 +200,7 @@ MonoBehaviour:
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: da4426d264d5a874ebb7955f6fbfaa43, type: 3}
   m_Name: "Camera/\U0001F4A5 Camera Shake"
-  m_EditorClassIdentifier: Assembly-CSharp::Metroma.Camera.Timeline.CameraShakeMarker
+  m_EditorClassIdentifier: Assembly-CSharp::Metroma.CameraTool.Timeline.CameraShakeMarker
   m_Time: 3.816666666666667
   profile: {fileID: 0}
   intensity: 0.5
@@ -218,7 +218,7 @@ MonoBehaviour:
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: da4426d264d5a874ebb7955f6fbfaa43, type: 3}
   m_Name: "Camera/\U0001F4A5 Camera Shake"
-  m_EditorClassIdentifier: Assembly-CSharp::Metroma.Camera.Timeline.CameraShakeMarker
+  m_EditorClassIdentifier: Assembly-CSharp::Metroma.CameraTool.Timeline.CameraShakeMarker
   m_Time: 2.9166666666666665
   profile: {fileID: 0}
   intensity: 0.5
@@ -257,7 +257,7 @@ MonoBehaviour:
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 7e92547363eac4b49af4c60ada8421d3, type: 3}
   m_Name: "Camera/\U0001F3AC Screen Flash"
-  m_EditorClassIdentifier: Assembly-CSharp::Metroma.Camera.Timeline.CameraFlashMarker
+  m_EditorClassIdentifier: Assembly-CSharp::Metroma.CameraTool.Timeline.CameraFlashMarker
   m_Time: 1.25
   flashColor: {r: 1, g: 1, b: 1, a: 1}
   duration: 0.5
@@ -272,7 +272,7 @@ MonoBehaviour:
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: e44f623b1482f424f852f7d9315232a3, type: 3}
   m_Name: "Camera/\U0001F4D0 Stop all modifiers"
-  m_EditorClassIdentifier: Assembly-CSharp::Metroma.Camera.Timeline.CameraStopAllModifiersMarker
+  m_EditorClassIdentifier: Assembly-CSharp::Metroma.CameraTool.Timeline.CameraStopAllModifiersMarker
   m_Time: 2.5
 --- !u!114 &3924157432745184588
 MonoBehaviour:
@@ -285,7 +285,7 @@ MonoBehaviour:
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 99c5410f3c6d603428616b7e7424c36e, type: 3}
   m_Name: CameraToolClip
-  m_EditorClassIdentifier: Assembly-CSharp::Metroma.Camera.Timeline.CameraToolClip
+  m_EditorClassIdentifier: Assembly-CSharp::Metroma.CameraTool.Timeline.CameraToolClip
   template:
     startProgress: 0.5
     endProgress: 1
@@ -325,7 +325,7 @@ MonoBehaviour:
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: d5f90de6b5cfa664aafefee9bc31b64c, type: 3}
   m_Name: Camera Tool Track
-  m_EditorClassIdentifier: Assembly-CSharp::Metroma.Camera.Timeline.CameraToolTrack
+  m_EditorClassIdentifier: Assembly-CSharp::Metroma.CameraTool.Timeline.CameraToolTrack
   m_Version: 3
   m_AnimClip: {fileID: 0}
   m_Locked: 0
@@ -499,7 +499,7 @@ MonoBehaviour:
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 7e92547363eac4b49af4c60ada8421d3, type: 3}
   m_Name: "Camera/\U0001F3AC Screen Flash"
-  m_EditorClassIdentifier: Assembly-CSharp::Metroma.Camera.Timeline.CameraFlashMarker
+  m_EditorClassIdentifier: Assembly-CSharp::Metroma.CameraTool.Timeline.CameraFlashMarker
   m_Time: 1.5833333333333333
   flashColor: {r: 1, g: 1, b: 1, a: 1}
   duration: 0.5

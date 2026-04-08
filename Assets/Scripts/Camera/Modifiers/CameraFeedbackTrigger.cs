@@ -1,7 +1,6 @@
 using UnityEngine;
-using Metroma.Camera.Modifiers;
 
-namespace Metroma.Camera
+namespace Metroma.CameraTool.Modifiers
 {
     /// <summary>
     /// A "Fire & Forget" component for Gameplay Programmers to trigger camera feedback

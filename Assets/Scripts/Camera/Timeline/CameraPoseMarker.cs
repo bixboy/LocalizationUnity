@@ -3,7 +3,7 @@ using System.ComponentModel;
 using UnityEngine;
 using UnityEngine.Timeline;
 
-namespace Metroma.Camera.Timeline
+namespace Metroma.CameraTool.Timeline
 {
     [Serializable]
     [DisplayName("Camera/🎬 Pose Transition")]

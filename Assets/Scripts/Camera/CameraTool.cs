@@ -3,46 +3,31 @@ using UnityEngine;
 using UnityEngine.Playables;
 using Dreamteck.Splines;
 using NaughtyAttributes;
-using Metroma.Camera.Timeline;
+using Metroma.CameraTool.Timeline;
 using UnityEngine.Events;
 using System.Collections.Generic;
-using Metroma.Camera.Modifiers;
+using Metroma.CameraTool.Modifiers;
 
-namespace Metroma.Camera
+namespace Metroma.CameraTool
 {
-    /// <summary> Defines a static camera view with position, rotation, FOV and distance offset. </summary>
-    [System.Serializable]
-    public struct CameraPose
-    {
-        public Vector3 position;
-        public Quaternion rotation;
-        public float fov;
-        public float distance;
-
-        public static CameraPose Default => new CameraPose { position = Vector3.zero, rotation = Quaternion.identity, fov = 60f, distance = 0f };
-    }
-
-    public enum CameraState { FollowRail, Transitioning, StaticPose, ReturningToRail }
-    public enum DirectorAction { None, Pause, Stop }
-
-    [System.Serializable]
-    public struct CameraChapter
-    {
-        public string name;
-        public PlayableDirector director;
-    }
-
+    
     [DisallowMultipleComponent]
     public class CameraTool : MonoBehaviour, INotificationReceiver
     {
-        // ── Service Access ───────────────────────────────────────────
-        /// <summary> The currently active CameraTool in the scene. </summary>
+        
+        #region Service Access
+        
+        /// <summary> The currently active CameraTool instance in the scene. </summary>
         public static CameraTool Active { get; private set; }
 
-        /// <summary> Triggered when a transition to a Pose starts. </summary>
-        public event System.Action<CameraPose> OnTransitionStarted;
+        /// <summary> Triggered when a camera transition starts. </summary>
+        public event Action<CameraPose> OnTransitionStarted;
         
-        // ── References ───────────────────────────────────────────────
+        #endregion
+
+        
+        #region Serialized Fields
+        
         [Foldout("References")]
         [SerializeField] private List<SplineComputer> splineRails = new List<SplineComputer>();
 
@@ -61,21 +46,22 @@ namespace Metroma.Camera
         [Tooltip("Optional: list of potential targets to look at. Switch via markers.")]
         [SerializeField] private List<Transform> lookAtTargets = new List<Transform>();
 
+        [Foldout("Chapters")]
         [SerializeField] private List<CameraChapter> chapters = new List<CameraChapter>();
 
-        // ── Events ───────────────────────────────────────────────────
         [Foldout("Events")]
         public UnityEvent<CameraChapter> onChapterStart;
         [Foldout("Events")]
         public UnityEvent<CameraChapter> onChapterEnd;
+        [Foldout("Events")]
+        public UnityEvent<string> onSplineNotified;
 
         public event Action<CameraState> OnStateChanged;
-        public event Action<CameraChapter> OnChapterEventStarted;
-        public event Action<CameraChapter> OnChapterEventActive;
+        public event Action<CameraChapter> OnChapterStarted;
+        public event Action<CameraChapter> OnChapterActive;
         public event Action<CameraPose> OnPoseEventReached;
         public event Action<CameraMarkerBase> OnMarkerEventHit;
 
-        // ── Animation Settings ───────────────────────────────────────
         [Foldout("Animation Settings")]
         [Range(0f, 1f)]
         [SerializeField] private float splineProgress;
@@ -85,11 +71,13 @@ namespace Metroma.Camera
         [Tooltip("Blend between spline rotation (0) and LookAt rotation (1).")]
         [SerializeField] private float lookAtWeight = 1f;
 
-        // ── Hidden / Serialized ──────────────────────────────────────
-        [HideInInspector] public UnityEvent<string> onSplineNotified;
         [HideInInspector] [SerializeField] private List<CameraSplineSegment> segments = new List<CameraSplineSegment>();
+        
+        #endregion
 
-        // ── Cached Runtime State ─────────────────────────────────────
+        
+        #region Runtime State
+        
         private Transform _cameraTransform;
         private bool _isInitialized;
 
@@ -100,23 +88,11 @@ namespace Metroma.Camera
         private bool _singleRailMode;
         private int _activeRailIndex;
 
-        // ── Effects State ───────────────────────────────────────────
         private Transform _lookAtTarget;
         private Transform _lookAtFrom;
         private float _lookAtLerp;
         private float _lookAtDuration;
 
-        // ── Pose Transition State ─────────────────────────────────────
-        public CameraState State 
-        { 
-            get => _state; 
-            private set
-            {
-                if (_state == value) return;
-                _state = value;
-                OnStateChanged?.Invoke(_state);
-            }
-        }
         private CameraState _state = CameraState.FollowRail;
         private CameraChapter? _activeChapter;
         private CameraPose _targetPose;
@@ -125,14 +101,25 @@ namespace Metroma.Camera
         private float _transitionDuration;
         private AnimationCurve _transitionCurve;
         private float _transitionAlpha;
-        private DirectorAction _directorActionOnArrival;
+        private DirectorAction _arrivalAction;
 
-        // ══════════════════════════════════════════════════════════════
-        // Lifecycle
-        // ══════════════════════════════════════════════════════════════
+        public CameraState State 
+        { 
+            get => _state; 
+            private set
+            {
+                if (_state == value)
+                    return;
+                
+                _state = value;
+                OnStateChanged?.Invoke(_state);
+            }
+        }
+        #endregion
 
+        
         #region Lifecycle
-
+        
         private void Awake()
         {
             Active = this;
@@ -147,56 +134,27 @@ namespace Metroma.Camera
 
         private void OnDestroy()
         {
-            if (Active == this) Active = null;
+            if (Active == this)
+                Active = null;
         }
 
         private void LateUpdate()
         {
-            if (!_isInitialized) return;
+            if (!_isInitialized)
+                return;
 
-            UpdateEffects();
-            UpdateTransition();
-            EvaluateAndApply();
+            UpdateEffectsTimers();
+            UpdateTransitionState();
+
+            CameraPose railPose = SampleRailPose();
+
+            ApplyCameraPose(railPose);
         }
-
-        private void UpdateTransition()
-        {
-            if (State != CameraState.Transitioning) return;
-
-            _transitionTime += Time.unscaledDeltaTime;
-            float t = Mathf.Clamp01(_transitionTime / _transitionDuration);
-            _transitionAlpha = _transitionCurve != null ? _transitionCurve.Evaluate(t) : Mathf.SmoothStep(0, 1, t);
-
-            if (t >= 1f)
-            {
-                if (State == CameraState.Transitioning)
-                {
-                    State = CameraState.StaticPose;
-                    OnPoseEventReached?.Invoke(_targetPose);
-                }
-                else if (State == CameraState.ReturningToRail)
-                {
-                    State = CameraState.FollowRail;
-                    
-                    if (_activeChapter.HasValue)
-                    {
-                        var ch = _activeChapter.Value;
-                        OnChapterEventActive?.Invoke(ch);
-                        _activeChapter = null; // Consume
-                    }
-                }
-            }
-        }
-
         #endregion
 
-
-        // ══════════════════════════════════════════════════════════════
-        // Core Logic
-        // ══════════════════════════════════════════════════════════════
-
-        #region Core Logic
-
+        
+        #region Internal Logic
+        
         private void CacheReferences()
         {
             if (targetCamera != null)
@@ -212,112 +170,199 @@ namespace Metroma.Camera
         {
             if (splineRails == null || splineRails.Count == 0)
                 return false;
-
-            for (int i = 0; i < splineRails.Count; i++)
-                if (splineRails[i] != null)
+            
+            foreach (var r in splineRails)
+            {
+                if (r)
                     return true;
-
+            }
+            
             return false;
         }
 
         private void RebuildChainCache()
         {
             int validCount = 0;
-            for (int i = 0; i < splineRails.Count; i++)
-                if (splineRails[i] != null)
+            foreach (var r in splineRails)
+            {
+                if (r)
                     validCount++;
+            }
 
             _chainRails = new SplineComputer[validCount];
             _chainSegCounts = new int[validCount];
             _chainTotalSegments = 0;
 
             int idx = 0;
-            for (int i = 0; i < splineRails.Count; i++)
+            foreach (var r in splineRails)
             {
-                if (splineRails[i] == null)
+                if (!r)
                     continue;
-
-                _chainRails[idx] = splineRails[i];
-                _chainSegCounts[idx] = Mathf.Max(1, splineRails[i].pointCount - 1);
+                
+                _chainRails[idx] = r;
+                _chainSegCounts[idx] = Mathf.Max(1, r.pointCount - 1);
                 _chainTotalSegments += _chainSegCounts[idx];
                 idx++;
             }
         }
 
-        private void UpdateEffects()
+        private void UpdateEffectsTimers()
         {
-            // ── LookAt Lerp ──
             if (_lookAtLerp < 1f && _lookAtDuration > 0)
             {
                 _lookAtLerp += Time.deltaTime / _lookAtDuration;
             }
         }
 
-        private void EvaluateAndApply()
+        private void UpdateTransitionState()
         {
-            // ── Rail Calculation ──
-            SplineSample result = EvaluateChainAt(splineProgress);
-            Vector3 railPos = (Vector3)result.position;
-            Quaternion railRot = result.rotation;
-            float railFov = targetCamera.fieldOfView;
+            if (State != CameraState.Transitioning && State != CameraState.ReturningToRail)
+                return;
 
-            // ── LookAt Calculation ──
-            Transform currentTarget = _lookAtTarget;
-            if (currentTarget != null && lookAtWeight > 0.001f)
+            _transitionTime += Time.unscaledDeltaTime;
+            float t = Mathf.Clamp01(_transitionTime / _transitionDuration);
+            _transitionAlpha = _transitionCurve != null ? _transitionCurve.Evaluate(t) : Mathf.SmoothStep(0, 1, t);
+
+            if (t >= 1f)
             {
-                Vector3 targetPos = currentTarget.position;
-                if (_lookAtLerp < 1f && _lookAtFrom != null)
-                    targetPos = Vector3.Lerp(_lookAtFrom.position, currentTarget.position, Mathf.SmoothStep(0, 1, _lookAtLerp));
-
-                Vector3 direction = targetPos - railPos;
-                if (direction.sqrMagnitude > 0.001f)
-                {
-                    Quaternion lookRot = Quaternion.LookRotation(direction, (Vector3)result.up);
-                    railRot = Quaternion.Slerp(result.rotation, lookRot, lookAtWeight);
-                }
+                HandleTransitionArrival();
             }
-
-            // ── Pose Blending ──
-            Vector3 finalPos;
-            Quaternion finalRotation;
-            float finalFov;
-
-            if (State == CameraState.FollowRail)
-            {
-                finalPos = railPos;
-                finalRotation = railRot;
-                finalFov = railFov;
-            }
-            else
-            {
-                // Calculate Target Pose including distance offset
-                Vector3 targetRealPos = _targetPose.position + (_targetPose.rotation * Vector3.back * _targetPose.distance);
-                
-                if (State == CameraState.StaticPose)
-                {
-                    finalPos = targetRealPos;
-                    finalRotation = _targetPose.rotation;
-                    finalFov = _targetPose.fov;
-                }
-                else if (State == CameraState.Transitioning)
-                {
-                    finalPos = Vector3.Lerp(_startPose.position, targetRealPos, _transitionAlpha);
-                    finalRotation = Quaternion.Slerp(_startPose.rotation, _targetPose.rotation, _transitionAlpha);
-                    finalFov = Mathf.Lerp(_startPose.fov, _targetPose.fov, _transitionAlpha);
-                }
-                else // ReturningToRail
-                {
-                    finalPos = Vector3.Lerp(_startPose.position, railPos, _transitionAlpha);
-                    finalRotation = Quaternion.Slerp(_startPose.rotation, railRot, _transitionAlpha);
-                    finalFov = Mathf.Lerp(_startPose.fov, railFov, _transitionAlpha);
-                }
-            }
-
-            _cameraTransform.SetPositionAndRotation(finalPos, finalRotation);
-            targetCamera.fieldOfView = finalFov;
         }
 
-        // ── Public API ──────────────────────────────────────────────
+        private void HandleTransitionArrival()
+        {
+            if (State == CameraState.Transitioning)
+            {
+                State = CameraState.StaticPose;
+                
+                if (playableDirector)
+                {
+                    if (_arrivalAction == DirectorAction.Pause)
+                    {
+                        playableDirector.Pause();
+                    }
+                    else if (_arrivalAction == DirectorAction.Stop)
+                    {
+                        playableDirector.Stop();
+                    }
+                }
+
+                OnPoseEventReached?.Invoke(_targetPose);
+            }
+            else if (State == CameraState.ReturningToRail)
+            {
+                State = CameraState.FollowRail;
+                
+                if (_activeChapter.HasValue)
+                {
+                    OnChapterActive?.Invoke(_activeChapter.Value);
+                    _activeChapter = null; // Consume
+                }
+            }
+
+            _arrivalAction = DirectorAction.None;
+        }
+
+        /// <summary> Decoupled sampling of the current rail position/rotation/fov. </summary>
+        private CameraPose SampleRailPose()
+        {
+            SplineSample result = EvaluateChainAt(splineProgress);
+            
+            CameraPose pose = new CameraPose
+            {
+                position = result.position,
+                rotation = result.rotation,
+                fov = targetCamera.fieldOfView,
+                distance = 0f
+            };
+
+            // Apply LookAt logic
+            Transform currentTarget = _lookAtTarget;
+            if (currentTarget && lookAtWeight > 0.001f)
+            {
+                Vector3 targetPos = currentTarget.position;
+                if (_lookAtLerp < 1f && _lookAtFrom)
+                    targetPos = Vector3.Lerp(_lookAtFrom.position, currentTarget.position, Mathf.SmoothStep(0, 1, _lookAtLerp));
+
+                Vector3 direction = targetPos - pose.position;
+                if (direction.sqrMagnitude > 0.001f)
+                {
+                    Quaternion lookRot = Quaternion.LookRotation(direction, result.up);
+                    pose.rotation = Quaternion.Slerp(pose.rotation, lookRot, lookAtWeight);
+                }
+            }
+
+            return pose;
+        }
+
+        /// <summary> Final application and blending to camera transform. </summary>
+        private void ApplyCameraPose(CameraPose railPose)
+        {
+            CameraPose finalPose = railPose;
+
+            switch (State)
+            {
+                case CameraState.Transitioning:
+                    finalPose = CameraPose.Lerp(railPose, _targetPose, _transitionAlpha);
+                    break;
+                
+                case CameraState.ReturningToRail:
+                    finalPose = CameraPose.Lerp(_startPose, railPose, _transitionAlpha);
+                    break;
+                
+                case CameraState.StaticPose:
+                    finalPose = _targetPose;
+                    break;
+            }
+
+            _cameraTransform.SetPositionAndRotation(finalPose.position, finalPose.rotation);
+            targetCamera.fieldOfView = finalPose.fov;
+
+            if (finalPose.distance != 0)
+                _cameraTransform.position -= _cameraTransform.forward * finalPose.distance;
+        }
+
+        private SplineSample EvaluateChainAt(float globalProgress)
+        {
+            if (_chainRails == null || _chainRails.Length == 0)
+                return default;
+
+            if (_singleRailMode)
+            {
+                int rIdx = Mathf.Clamp(_activeRailIndex, 0, _chainRails.Length - 1);
+                return _chainRails[rIdx].Evaluate(Mathf.Clamp01(globalProgress));
+            }
+
+            if (_chainTotalSegments == 0)
+                return _chainRails[0].Evaluate(Mathf.Clamp01(globalProgress));
+
+            float segWidth = 1f / _chainTotalSegments;
+            int targetSeg = Mathf.Clamp((int)(globalProgress / segWidth), 0, _chainTotalSegments - 1);
+            float segLocalT = Mathf.Clamp01((globalProgress - targetSeg * segWidth) / segWidth);
+
+            int running = 0;
+            for (int r = 0; r < _chainRails.Length; r++)
+            {
+                int count = _chainSegCounts[r];
+                if (targetSeg < running + count)
+                {
+                    int localSeg = targetSeg - running;
+                    
+                    float localStart = (float)localSeg / count;
+                    float localEnd = (float)(localSeg + 1) / count;
+                    float localProgress = Mathf.Lerp(localStart, localEnd, segLocalT);
+                    
+                    return _chainRails[r].Evaluate(Mathf.Clamp01(localProgress));
+                }
+                running += count;
+            }
+
+            return _chainRails[_chainRails.Length - 1].Evaluate(1f);
+        }
+        #endregion
+
+        
+        #region Public API
         
         /// <summary> Smoothly transitions the camera away from the rail to a fixed pose. </summary>
         public void TransitionToPose(CameraPose target, float duration, AnimationCurve curve = null, DirectorAction action = DirectorAction.None)
@@ -334,32 +379,29 @@ namespace Metroma.Camera
             _transitionDuration = duration;
             _transitionCurve = curve;
             _transitionTime = 0f;
-            _directorActionOnArrival = action;
+            _arrivalAction = action;
 
-            if (_directorActionOnArrival == DirectorAction.Pause && playableDirector != null)
+            if (playableDirector)
             {
-                Debug.Log($"[CameraTool] Transition started. Pausing Timeline immediately: {playableDirector.name}", this);
-                playableDirector.Pause();
-            }
-            else if (_directorActionOnArrival == DirectorAction.Stop && playableDirector != null)
-            {
-                Debug.Log($"[CameraTool] Transition started. Stopping Timeline immediately: {playableDirector.name}", this);
-                playableDirector.Stop();
+                if (_arrivalAction == DirectorAction.Pause)
+                {
+                    playableDirector.Pause();
+                }
+                else if (_arrivalAction == DirectorAction.Stop)
+                {
+                    playableDirector.Stop();
+                }
             }
             
             State = CameraState.Transitioning;
             OnTransitionStarted?.Invoke(target);
         }
 
-        public void TransitionToPose(CameraPose target, float duration, AnimationCurve curve = null)
-        {
-            TransitionToPose(target, duration, curve, DirectorAction.Pause);
-        }
-
-        /// <summary> Returns the camera control back to the spline rail smoothly and resumes Timeline. </summary>
+        /// <summary> Returns control to the spline rail from a static pose. </summary>
         public void ReturnToRail(float duration, AnimationCurve curve = null)
         {
-            if (State == CameraState.FollowRail) return;
+            if (State == CameraState.FollowRail)
+                return;
 
             _startPose = new CameraPose
             {
@@ -375,121 +417,82 @@ namespace Metroma.Camera
 
             if (playableDirector != null && playableDirector.state != PlayState.Playing)
             {
-                Debug.Log($"[CameraTool] Resuming Timeline: {playableDirector.name}", this);
                 playableDirector.Play();
             }
 
             State = CameraState.ReturningToRail;
         }
 
-        /// <summary> Plays a specific chapter from the list by index, with a smooth transition. </summary>
+        /// <summary> Plays a specific chapter with automated rail capture and smooth transition. </summary>
         public void PlayChapter(int index, float blendDuration = 1.5f)
         {
             if (index < 0 || index >= chapters.Count)
-            {
-                Debug.LogError($"[CameraTool] Chapter index {index} out of range.");
                 return;
-            }
 
             var chapter = chapters[index];
-            if (chapter.director == null)
-            {
-                Debug.LogError($"[CameraTool] Chapter '{chapter.name}' has no PlayableDirector assigned.");
+            if (!chapter.director)
                 return;
-            }
 
-            // 1. Stop current director if any
-            if (playableDirector != null && playableDirector.state == PlayState.Playing)
-            {
-                if (_activeChapter.HasValue)
-                    onChapterEnd?.Invoke(_activeChapter.Value);
+            if (_activeChapter.HasValue) 
+                onChapterEnd?.Invoke(_activeChapter.Value);
 
+            if (playableDirector && playableDirector.state == PlayState.Playing)
                 playableDirector.Stop();
-            }
 
-            // 2. Set new active director
             playableDirector = chapter.director;
-
-            // 3. Sample the first frame to get the target rail position
             playableDirector.time = 0;
             playableDirector.Evaluate();
             
-            // Re-evaluate rail manually to ensure we have the frame 0 position
-            EvaluateAndApply(); 
+            CameraPose targetPose = SampleRailPose();
 
-            // 4. Record target pose (where we want to be)
-            CameraPose target = new CameraPose
-            {
-                position = _cameraTransform.position,
-                rotation = _cameraTransform.rotation,
-                fov = targetCamera.fieldOfView,
-                distance = 0f
-            };
-
-            // 5. Jump back to "previous" state to start the blend
             _activeChapter = chapter;
-            OnChapterEventStarted?.Invoke(chapter);
+            OnChapterStarted?.Invoke(chapter);
             onChapterStart?.Invoke(chapter);
 
-            playableDirector.Play(); // Start it
-            TransitionToPose(target, blendDuration, AnimationCurve.EaseInOut(0,0,1,1), DirectorAction.None);
+            playableDirector.Play();
+            TransitionToPose(targetPose, blendDuration, AnimationCurve.EaseInOut(0, 0, 1, 1));
         }
 
         public void PlayChapter(string chapterName, float blendDuration = 1.5f)
         {
             int idx = chapters.FindIndex(c => c.name.Equals(chapterName, StringComparison.OrdinalIgnoreCase));
-            if (idx >= 0) PlayChapter(idx, blendDuration);
-            else Debug.LogError($"[CameraTool] Chapter '{chapterName}' not found.");
+            
+            if (idx >= 0)
+                PlayChapter(idx, blendDuration);
         }
 
-        private SplineSample EvaluateChainAt(float globalProgress)
+        public void SwitchToRail(int idx)
         {
-            if (_chainRails == null || _chainRails.Length == 0)
-                return default;
+            _singleRailMode = true; _activeRailIndex = idx;
+        }
+        
 
-            if (_singleRailMode)
-            {
-                int idx = Mathf.Clamp(_activeRailIndex, 0, _chainRails.Length - 1);
-                return _chainRails[idx].Evaluate(Mathf.Clamp01(globalProgress));
-            }
-
-            if (_chainRails.Length == 1)
-                return _chainRails[0].Evaluate(Mathf.Clamp01(globalProgress));
-
-            if (_chainTotalSegments == 0)
-                return _chainRails[0].Evaluate(Mathf.Clamp01(globalProgress));
-
-            float segWidth = 1f / _chainTotalSegments;
-            int targetSeg = Mathf.Clamp((int)(globalProgress / segWidth), 0, _chainTotalSegments - 1);
-            float segLocalT = Mathf.Clamp01((globalProgress - targetSeg * segWidth) / segWidth);
-
-            int running = 0;
-            for (int r = 0; r < _chainRails.Length; r++)
-            {
-                int count = _chainSegCounts[r];
-                if (targetSeg < running + count)
-                {
-                    int localSeg = targetSeg - running;
-                    float localStart = (float)localSeg / count;
-                    float localEnd = (float)(localSeg + 1) / count;
-                    float localProgress = Mathf.Lerp(localStart, localEnd, segLocalT);
-                    return _chainRails[r].Evaluate(Mathf.Clamp01(localProgress));
-                }
-                running += count;
-            }
-
-            return _chainRails[_chainRails.Length - 1].Evaluate(1f);
+        public void ResetToChainMode()
+        {
+            _singleRailMode = false;
         }
 
-        #endregion
+        /// <summary> Handles a LookAt switch triggered by a Timeline marker. </summary>
+        public void HandleLookAtSwitch(CameraLookAtSwitchMarker m)
+        {
+            int idx = m.TargetIndex;
+            Transform next = (idx >= 0 && idx < lookAtTargets.Count) ? lookAtTargets[idx] : null;
+            SetLookAt(next, m.TransitionDuration);
+        }
 
+        /// <summary> Immediate LookAt switch with optional duration. </summary>
+        public void SetLookAt(Transform target, float duration = 1f)
+        {
+            if (_lookAtTarget == target)
+                return;
+            
+            _lookAtFrom = _lookAtTarget;
+            _lookAtTarget = target;
+            _lookAtDuration = duration;
+            _lookAtLerp = duration > 0 ? 0f : 1f;
+        }
 
-        // ══════════════════════════════════════════════════════════════
-        // Timeline Signals
-        // ══════════════════════════════════════════════════════════════
-
-        #region Timeline Signal Handlers
-
+        /// <summary> Generic event handler for legacy markers or external triggers. </summary>
         public void TriggerTimelineEvent(string eventName)
         {
             if (string.IsNullOrEmpty(eventName))
@@ -497,166 +500,75 @@ namespace Metroma.Camera
             
             string lowerEvent = eventName.ToLower();
 
-            // 1. Rail switching
-            if (lowerEvent.StartsWith("rail:") && int.TryParse(eventName.Substring(5), out int railIndex))
-            {
-                SwitchToRail(railIndex);
-                return;
-            }
-
-            // 2. HitStop
-            if (lowerEvent.StartsWith("hitstop:") && float.TryParse(eventName.Substring(8), out float duration))
-            {
-                targetCamera.DoHitStop(duration);
-                return;
-            }
-
-            // 3. Flash
-            if (lowerEvent.StartsWith("flash:"))
+            if (lowerEvent == "flash")
             {
                 targetCamera.DoFlash(Color.white, 0.5f);
-                return;
             }
-
-            // 4. Handheld Toggle
-            if (lowerEvent == "handheld:on")
-            {
-                targetCamera.SetHandheld(true);
-                return;
-            }
-
-            if (lowerEvent == "handheld:off")
-            {
-                targetCamera.SetHandheld(false);
-                return;
-            }
-
-            // 5. Wobble
-            if (lowerEvent == "wobble")
+            else if (lowerEvent == "wobble")
             {
                 targetCamera.DoWobble(5f, 1f, 2f);
-                return;
             }
 
-            Debug.Log($"[CameraTool] Generic event handled: '{eventName}'", this);
+            onSplineNotified?.Invoke(eventName);
         }
-
-        public void HandleLookAtSwitch(CameraLookAtSwitchMarker m)
-        {
-            int idx = m.TargetIndex;
-            Transform next = (idx >= 0 && idx < lookAtTargets.Count) ? lookAtTargets[idx] : null;
-
-            if (_lookAtTarget == next)
-                return;
-
-            _lookAtFrom = _lookAtTarget;
-            _lookAtTarget = next;
-            _lookAtDuration = m.TransitionDuration;
-            _lookAtLerp = (_lookAtDuration > 0) ? 0f : 1f;
-
-            Debug.Log($"[CameraTool] LookAt switched to: {(next != null ? next.name : "None")}", this);
-        }
-
         #endregion
 
-
-        #region INotificationReceiver
-
-        public void OnNotify(Playable origin, INotification notification, object context)
-        {
-            // Auto-capture or refresh the director from the notifier
-            if (origin.IsValid())
-            {
-                var director = origin.GetGraph().GetResolver() as PlayableDirector;
-                if (director != null && playableDirector != director)
-                {
-                    playableDirector = director;
-                    Debug.Log($"[CameraTool] Switched/Captured active PlayableDirector: {playableDirector.name}", this);
-                }
-            }
-
-            // NEW COMMAND PATTERN: All CameraMarkerBase markers execute their own logic.
-            if (notification is CameraMarkerBase cameraMarker)
-            {
-                cameraMarker.Execute(this);
-                OnMarkerEventHit?.Invoke(cameraMarker);
-            }
-            // Fallback for generic event markers or third party notifications
-            else if (notification is CameraEventMarker marker)
-            {
-                TriggerTimelineEvent(marker.EventName);
-                onSplineNotified?.Invoke(marker.EventName);
-            }
-        }
-
-        #endregion
-
-
-        // ══════════════════════════════════════════════════════════════
-        // Public API
-        // ══════════════════════════════════════════════════════════════
-
-        #region Public API
-
+        
+        #region Public Properties
         public float SplineProgress { get => splineProgress; set => splineProgress = Mathf.Clamp01(value); }
         public float LookAtWeight { get => lookAtWeight; set => lookAtWeight = Mathf.Clamp01(value); }
 
         public UnityEngine.Camera TargetCamera => targetCamera;
         public List<Transform> LookAtTargets => lookAtTargets;
         public Transform CurrentLookAtTarget => _lookAtTarget;
-
-        public void SwitchToRail(int railIndex)
-        {
-            if (_chainRails == null || railIndex < 0 || railIndex >= _chainRails.Length)
-                return;
-
-            _singleRailMode = true;
-            _activeRailIndex = railIndex;
-        }
-
-        public void ResetToChainMode() { _singleRailMode = false; }
-
-        public void SetTargetCamera(UnityEngine.Camera newCamera)
-        {
-            if (newCamera == null)
-                return;
-                
-            targetCamera = newCamera;
-            CacheReferences();
-        }
-
         #endregion
 
+        
+        #region INotificationReceiver
+        public void OnNotify(Playable origin, INotification notification, object context)
+        {
+            if (origin.IsValid())
+            {
+                var director = origin.GetGraph().GetResolver() as PlayableDirector;
+                
+                if (director != null && playableDirector != director)
+                    playableDirector = director;
+            }
 
-        // ══════════════════════════════════════════════════════════════
-        // Editor
-        // ══════════════════════════════════════════════════════════════
+            if (notification is CameraMarkerBase marker)
+            {
+                marker.Execute(this);
+                OnMarkerEventHit?.Invoke(marker);
+            }
+        }
+        #endregion
 
 #if UNITY_EDITOR
+        
+        // ── Editor-only API ──────────────────────────────────────────
 
         public List<SplineComputer> EditorSplineRails => splineRails;
         public UnityEngine.Camera EditorCamera => targetCamera;
         public PlayableDirector EditorDirector => playableDirector;
         public Transform EditorLookAtTarget => lookAtTarget;
         public List<Transform> EditorLookAtTargets => lookAtTargets;
-        public Transform EditorCurrentLookAt => _lookAtTarget;
         public List<CameraSplineSegment> EditorSegments => segments;
 
         public int EditorRailCount
         {
             get
             {
-                if (splineRails == null) 
+                if (splineRails == null)
                     return 0;
                 
-                int c = 0;
-                for (int i = 0; i < splineRails.Count; i++)
+                int count = 0;
+                foreach (var r in splineRails)
                 {
-                    if (splineRails[i]) 
-                        c++;
+                    if (r != null) 
+                        count++;
                 }
-
-                return c;
+                
+                return count;
             }
         }
 
@@ -664,17 +576,17 @@ namespace Metroma.Camera
         {
             get
             {
-                if (splineRails == null) 
+                if (splineRails == null)
                     return 0;
                 
-                int t = 0; 
-                for (int i=0; i<splineRails.Count; i++) 
+                int total = 0;
+                foreach (var r in splineRails)
                 {
-                    if (splineRails[i]) 
-                        t += splineRails[i].pointCount;
+                    if (r)
+                        total += r.pointCount;
                 }
                 
-                return t;
+                return total;
             }
         }
 
@@ -685,37 +597,15 @@ namespace Metroma.Camera
                 if (splineRails == null)
                     return 0;
                 
-                int t = 0;
-                for (int i=0; i<splineRails.Count; i++)
+                int total = 0;
+                foreach (var r in splineRails)
                 {
-                    if (splineRails[i]) 
-                        t += Mathf.Max(0, splineRails[i].pointCount - 1);
+                    if (r)
+                        total += Mathf.Max(0, r.pointCount - 1);
                 }
                 
-                return t;
+                return total;
             }
-        }
-
-        public void EditorEvaluateAt(float progress)
-        {
-            if (!HasValidRails() || !targetCamera)
-                return;
-            
-            splineProgress = Mathf.Clamp01(progress);
-            RebuildChainCache();
-            SplineSample result = EvaluateChainAt(splineProgress);
-            Quaternion rot = result.rotation;
-            
-            Transform activeTarget = _lookAtTarget ? _lookAtTarget : lookAtTarget;
-            if (activeTarget && lookAtWeight > 0.001f)
-            {
-                Vector3 dir = activeTarget.position - result.position;
-                if (dir.sqrMagnitude > 0.001f)
-                {
-                    rot = Quaternion.Slerp(result.rotation, Quaternion.LookRotation(dir, result.up), lookAtWeight);
-                }
-            }
-            targetCamera.transform.SetPositionAndRotation(result.position, rot);
         }
 
         public SplineSample EditorSampleAt(float progress)
@@ -727,19 +617,15 @@ namespace Metroma.Camera
             return EvaluateChainAt(Mathf.Clamp01(progress));
         }
 
-        private int _lastKnownPointCount = -1;
-        private void OnValidate()
+        public void EditorEvaluateAt(float progress)
         {
-            splineProgress = Mathf.Clamp01(splineProgress);
-            lookAtWeight = Mathf.Clamp01(lookAtWeight);
+            if (!HasValidRails() || !targetCamera)
+                return;
             
-            int cp = EditorPointCount;
-            if (_lastKnownPointCount != cp && cp > 0)
-            {
-                _lastKnownPointCount = cp;
-                if (segments.Count != EditorTotalSegmentCount)
-                    EditorSyncSegments();
-            }
+            splineProgress = progress;
+            RebuildChainCache();
+            CameraPose p = SampleRailPose();
+            targetCamera.transform.SetPositionAndRotation(p.position, p.rotation);
         }
 
         public void EditorSyncSegments()
@@ -753,11 +639,13 @@ namespace Metroma.Camera
                 segments.RemoveAt(segments.Count - 1);
             }
             
-            while (segments.Count < total) 
+            while (segments.Count < total)
+            {
                 segments.Add(new CameraSplineSegment
                 {
                     duration = 1f, easing = AnimationCurve.EaseInOut(0, 0, 1, 1)
                 });
+            }
             
             int idx = 0;
             for (int r = 0; r < splineRails.Count; r++)
@@ -766,7 +654,6 @@ namespace Metroma.Camera
                     continue;
                 
                 string prefix = splineRails.Count > 1 ? $"R{r} " : "";
-                
                 for (int n = 0; n < splineRails[r].pointCount - 1; n++) 
                 {
                     if (idx < segments.Count)

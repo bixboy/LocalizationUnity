@@ -1,10 +1,10 @@
 using UnityEngine;
 using System;
-using Metroma.Camera;
-using Metroma.Camera.Modifiers;
-using Metroma.Camera.Timeline;
+using Metroma.CameraTool;
+using Metroma.CameraTool.Modifiers;
+using Metroma.CameraTool.Timeline;
 
-namespace Metroma.Camera.Examples
+namespace Metroma.CameraTool.Examples
 {
     /// <summary>
     /// Example script for Gameplay Programmers to demonstrate how to sync
@@ -15,7 +15,8 @@ namespace Metroma.Camera.Examples
         private void OnEnable()
         {
             // IMPORTANT: Access the Active instance via the Service Pattern
-            if (CameraTool.Active == null) return;
+            if (CameraTool.Active == null)
+                return;
 
             // 1. Subscribe to Camera State changes (FollowRail, Transitioning, StaticPose, ReturningToRail)
             CameraTool.Active.OnStateChanged += HandleStateChanged;
@@ -24,7 +25,7 @@ namespace Metroma.Camera.Examples
             CameraTool.Active.OnPoseEventReached += HandleMinigameStart;
 
             // 3. Subscribe to Chapter transitions (when a new Timeline starts its blend)
-            CameraTool.Active.OnChapterEventStarted += HandleChapterSwitch;
+            CameraTool.Active.OnChapterStarted += HandleChapterSwitch;
 
             // 4. Subscribe to any Timeline Marker hit
             CameraTool.Active.OnMarkerEventHit += HandleMarker;
@@ -35,12 +36,11 @@ namespace Metroma.Camera.Examples
 
         private void OnDisable()
         {
-            // ALWAYS Unsubscribe to avoid memory leaks or null references when switching scenes
             if (CameraTool.Active != null)
             {
                 CameraTool.Active.OnStateChanged -= HandleStateChanged;
                 CameraTool.Active.OnPoseEventReached -= HandleMinigameStart;
-                CameraTool.Active.OnChapterEventStarted -= HandleChapterSwitch;
+                CameraTool.Active.OnChapterStarted -= HandleChapterSwitch;
                 CameraTool.Active.OnMarkerEventHit -= HandleMarker;
             }
 

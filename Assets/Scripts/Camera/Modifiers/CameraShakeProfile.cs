@@ -1,6 +1,6 @@
 using UnityEngine;
 
-namespace Metroma.Camera.Modifiers
+namespace Metroma.CameraTool.Modifiers
 {
     [CreateAssetMenu(fileName = "NewShakeProfile", menuName = "Camera/Profiles/Shake")]
     public class CameraShakeProfile : ScriptableObject

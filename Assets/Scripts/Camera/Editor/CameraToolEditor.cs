@@ -1,14 +1,14 @@
 using UnityEngine;
 using UnityEditor;
-using Metroma.Camera;
-using Metroma.Camera.Timeline;
+using Metroma.CameraTool;
+using Metroma.CameraTool.Timeline;
 using Dreamteck.Splines;
 using UnityEngine.Timeline;
 using UnityEngine.Playables;
 using System.Collections.Generic;
-using Metroma.Camera.Modifiers;
+using Metroma.CameraTool.Modifiers;
 
-namespace Metroma.Camera.Editor
+namespace Metroma.CameraTool.Editor
 {
     /// <summary>
     /// Custom Inspector for <see cref="CameraTool"/>.
@@ -107,27 +107,47 @@ namespace Metroma.Camera.Editor
                 DrawHeader();
                 DrawSeparator();
                 DrawStatusPanel(tool);
+                
                 EditorGUILayout.Space(4);
-                DrawReferencesSection();
-                DrawAnimationSection(tool);
-                DrawViewportSection(); // New section
-                DrawEventsSection();
-                DrawHapticsSection(tool);
-                DrawChaptersSection(tool);
+                
+                // --- Grouped Sections ---
+                DrawSystemConfig(tool);
+                DrawAnimationControls(tool);
+                DrawChapterManager(tool);
                 DrawSegmentManager(tool);
-                DrawQuickActions(tool);
-                DrawDebugSection(tool);
+                
+                EditorGUILayout.Space(4);
+                
+                DrawEditorUtilities(tool);
             }
-            catch (ExitGUIException)
-            {
-                throw;
-            }
-            catch (System.Exception e)
-            {
-                Debug.LogException(e);
-            }
+            catch (ExitGUIException) { throw; }
+            catch (System.Exception e) { Debug.LogException(e); }
 
             serializedObject.ApplyModifiedProperties();
+        }
+
+        private void DrawSystemConfig(CameraTool tool)
+        {
+            DrawReferencesSection();
+            DrawViewportSection();
+            DrawHapticsSection(tool);
+        }
+
+        private void DrawAnimationControls(CameraTool tool)
+        {
+            DrawAnimationSection(tool);
+        }
+
+        private void DrawChapterManager(CameraTool tool)
+        {
+            DrawChaptersSection(tool);
+            DrawEventsSection();
+        }
+
+        private void DrawEditorUtilities(CameraTool tool)
+        {
+            DrawQuickActions(tool);
+            DrawDebugSection(tool);
         }
 
         // ══════════════════════════════════════════════════════════════
@@ -254,9 +274,11 @@ namespace Metroma.Camera.Editor
             float progress = _splineProgress.floatValue;
 
             EditorGUI.DrawRect(barRect, new Color(0.1f, 0.1f, 0.1f, 0.8f));
+            
             Rect fillRect = barRect;
             fillRect.width *= progress;
             Color barColor = Color.Lerp(new Color(0.2f, 0.6f, 1f), new Color(0.1f, 0.9f, 0.4f), progress);
+            
             EditorGUI.DrawRect(fillRect, barColor);
             GUI.Label(barRect, $"  {progress * 100f:F1}%", _progressLabelStyle);
 
@@ -296,24 +318,27 @@ namespace Metroma.Camera.Editor
         private void DrawHapticsSection(CameraTool tool)
         {
             _showHaptics = DrawSectionHeader("🎮  Gamepad Haptics", _showHaptics);
-            if (!_showHaptics) return;
+            if (!_showHaptics)
+                return;
 
             EditorGUI.indentLevel++;
 
             var cam = tool.TargetCamera;
-            if (cam == null)
+            if (!cam)
             {
                 EditorGUILayout.HelpBox("Assign a Target Camera to manage haptics.", MessageType.Warning);
             }
             else
             {
                 var h = cam.GetComponent<CameraModifierHandler>();
-                if (h == null)
+                if (!h)
                 {
                     EditorGUILayout.BeginHorizontal();
                     EditorGUILayout.HelpBox("CameraModifierHandler missing.", MessageType.Info);
+                    
                     if (GUILayout.Button("Add", GUILayout.Width(40)))
                         cam.gameObject.AddComponent<CameraModifierHandler>();
+                    
                     EditorGUILayout.EndHorizontal();
                 }
                 else
@@ -321,6 +346,7 @@ namespace Metroma.Camera.Editor
                     EditorGUI.BeginChangeCheck();
                     h.enableGamepadHaptics = EditorGUILayout.Toggle("Enable Vibration", h.enableGamepadHaptics);
                     h.hapticMultiplier = EditorGUILayout.Slider("Vibration Power", h.hapticMultiplier, 0f, 2f);
+                    
                     if (EditorGUI.EndChangeCheck())
                     {
                         EditorUtility.SetDirty(h);
@@ -335,7 +361,8 @@ namespace Metroma.Camera.Editor
         private void DrawChaptersSection(CameraTool tool)
         {
             _foldChapters = DrawSectionHeader("📚  Chapters Manager", _foldChapters);
-            if (!_foldChapters) return;
+            if (!_foldChapters)
+                return;
 
             EditorGUI.indentLevel++;
 
@@ -365,9 +392,13 @@ namespace Metroma.Camera.Editor
                 if (GUILayout.Button("▶ Play", GUILayout.Width(55)))
                 {
                     if (Application.isPlaying)
+                    {
                         tool.PlayChapter(i);
+                    }
                     else
+                    {
                         EditorUtility.DisplayDialog("CameraTool", "Play mode required to test chapter transitions.", "OK");
+                    }
                 }
                 GUI.backgroundColor = Color.white;
 
@@ -399,7 +430,8 @@ namespace Metroma.Camera.Editor
         private void DrawEventsSection()
         {
             _foldEvents = DrawSectionHeader("🔔  Chapter Lifecycle", _foldEvents);
-            if (!_foldEvents) return;
+            if (!_foldEvents)
+                return;
 
             EditorGUI.indentLevel++;
             EditorGUILayout.PropertyField(_onChapterStart, new GUIContent("On Chapter Start"));
@@ -425,8 +457,7 @@ namespace Metroma.Camera.Editor
             EditorGUILayout.BeginHorizontal();
             int pointCount = tool.EditorPointCount;
             int segmentCount = _segments.arraySize;
-            EditorGUILayout.LabelField(
-                $"Rails: {tool.EditorRailCount}  |  Nodes: {pointCount}  |  Segments: {segmentCount}",
+            EditorGUILayout.LabelField($"Rails: {tool.EditorRailCount}  |  Nodes: {pointCount}  |  Segments: {segmentCount}",
                 EditorStyles.miniLabel);
 
             if (GUILayout.Button("⟳ Sync", GUILayout.Width(70), GUILayout.Height(20)))
@@ -525,14 +556,20 @@ namespace Metroma.Camera.Editor
                 easingProp.animationCurveValue = AnimationCurve.EaseInOut(0, 0, 1, 1);
                 
             if (GUILayout.Button("Ease In", ps))
-                easingProp.animationCurveValue = new AnimationCurve(new Keyframe(0, 0, 0, 0), new Keyframe(1, 1, 2, 0));
+                easingProp.animationCurveValue = new AnimationCurve(
+                    new Keyframe(0, 0, 0, 0), 
+                    new Keyframe(1, 1, 2, 0));
             
             if (GUILayout.Button("Ease Out", ps))
-                easingProp.animationCurveValue = new AnimationCurve(new Keyframe(0, 0, 0, 2), new Keyframe(1, 1, 0, 0));
+                easingProp.animationCurveValue = new AnimationCurve(
+                    new Keyframe(0, 0, 0, 2),
+                    new Keyframe(1, 1, 0, 0));
             
             if (GUILayout.Button("Slow", ps))
                 easingProp.animationCurveValue = new AnimationCurve(
-                    new Keyframe(0, 0, 0, 0), new Keyframe(0.5f, 0.5f, 0.3f, 0.3f), new Keyframe(1, 1, 0, 0));
+                    new Keyframe(0, 0, 0, 0),
+                    new Keyframe(0.5f, 0.5f, 0.3f, 0.3f),
+                    new Keyframe(1, 1, 0, 0));
             
             EditorGUILayout.EndHorizontal();
 
@@ -570,7 +607,8 @@ namespace Metroma.Camera.Editor
                 totalTime += seg.FindPropertyRelative("duration").floatValue;
                 totalTime += seg.FindPropertyRelative("waitAtEnd").floatValue;
             }
-            if (totalTime <= 0f) return;
+            if (totalTime <= 0f)
+                return;
 
             Rect barRect = EditorGUILayout.GetControlRect(false, 16);
             barRect = EditorGUI.IndentedRect(barRect);
@@ -613,14 +651,14 @@ namespace Metroma.Camera.Editor
         private void GenerateTimelineClips(CameraTool tool)
         {
             PlayableDirector director = tool.EditorDirector;
-            if (director == null)
+            if (!director)
             {
                 EditorUtility.DisplayDialog("CameraTool", "Assign a PlayableDirector first.", "OK");
                 return;
             }
 
             TimelineAsset timeline = director.playableAsset as TimelineAsset;
-            if (timeline == null)
+            if (!timeline)
             {
                 EditorUtility.DisplayDialog("CameraTool", "No TimelineAsset on the PlayableDirector.", "OK");
                 return;
@@ -635,7 +673,6 @@ namespace Metroma.Camera.Editor
 
             Undo.RecordObject(timeline, "Generate Camera Timeline Clips");
 
-            // Find or create track
             CameraToolTrack cameraTrack = null;
             foreach (TrackAsset track in timeline.GetOutputTracks())
             {   
@@ -646,7 +683,7 @@ namespace Metroma.Camera.Editor
                 }
             }
 
-            if (cameraTrack == null)
+            if (!cameraTrack)
             {
                 cameraTrack = timeline.CreateTrack<CameraToolTrack>(null, "🎬 Camera Spline");
                 director.SetGenericBinding(cameraTrack, tool);
@@ -675,7 +712,7 @@ namespace Metroma.Camera.Editor
                 clip.duration = seg.duration;
 
                 CameraToolClip clipAsset = clip.asset as CameraToolClip;
-                if (clipAsset != null)
+                if (clipAsset)
                 {
                     Undo.RecordObject(clipAsset, "Configure Camera Clip");
                     clipAsset.Template.startProgress = startP;
@@ -733,10 +770,10 @@ namespace Metroma.Camera.Editor
             if (GUILayout.Button(focusText, GUILayout.Height(28)))
             {
                 _isCameraLocked = !_isCameraLocked;
-                if (_isCameraLocked && tool.EditorCamera != null)
+                if (_isCameraLocked && tool.EditorCamera)
                 {
                     SceneView sv = SceneView.lastActiveSceneView;
-                    if (sv != null)
+                    if (sv)
                         sv.AlignViewToObject(tool.EditorCamera.transform);
                 }
             }
@@ -825,41 +862,29 @@ namespace Metroma.Camera.Editor
             if (elapsed >= _previewTotalDuration)
             {
                 tool.EditorEvaluateAt(1f);
-                SceneView.RepaintAll();
                 StopPreview();
-                Repaint();
                 return;
             }
 
-            // Find current segment
+            // Find current segment and calculate progress
             int segCount = _previewSegStarts.Length;
-            float progress = 0f;
+            float progress = 1f;
 
             for (int i = 0; i < segCount; i++)
             {
-                float segStart = _previewSegStarts[i];
-                float segDur = _previewSegDurations[i];
-                float segEnd = segStart + segDur;
-
-                if (elapsed < segEnd)
+                if (elapsed < _previewSegStarts[i] + _previewSegDurations[i])
                 {
-                    float t = Mathf.Clamp01((elapsed - segStart) / segDur);
+                    float t = Mathf.Clamp01((elapsed - _previewSegStarts[i]) / _previewSegDurations[i]);
                     float easedT = _previewSegCurves[i].Evaluate(t);
-
-                    float progressStart = (float)i / segCount;
-                    float progressEnd = (float)(i + 1) / segCount;
-                    progress = Mathf.Lerp(progressStart, progressEnd, easedT);
+                    progress = Mathf.Lerp((float)i / segCount, (float)(i + 1) / segCount, easedT);
                     break;
                 }
                 
+                // If in wait time between segments
                 if (i < segCount - 1 && elapsed < _previewSegStarts[i + 1])
                 {
                     progress = (float)(i + 1) / segCount;
                     break;
-                }
-                else
-                {
-                    progress = (float)(i + 1) / segCount;
                 }
             }
 
@@ -906,6 +931,7 @@ namespace Metroma.Camera.Editor
         {
             EditorGUILayout.Space(2);
             var rect = EditorGUILayout.GetControlRect(false, 22);
+            
             EditorGUI.DrawRect(rect, BoxBg);
             rect.x += 4;
             rect.width -= 4;
@@ -954,7 +980,7 @@ namespace Metroma.Camera.Editor
                 return;
 
             CameraTool tool = (CameraTool)target;
-            UnityEngine.Camera cam = tool.EditorCamera;
+            Camera cam = tool.EditorCamera;
             if (cam == null)
                 return;
 
@@ -979,7 +1005,8 @@ namespace Metroma.Camera.Editor
 
         private void OnSceneGUI()
         {
-            if (!_isCameraLocked || !_showHud) return;
+            if (!_isCameraLocked || !_showHud)
+                return;
 
             DrawCinematicHUD();
         }
@@ -1003,9 +1030,11 @@ namespace Metroma.Camera.Editor
             if (_showGrid)
             {
                 Color gridColor = new Color(1f, 1f, 1f, 0.2f);
+                
                 // Vertical lines
                 EditorGUI.DrawRect(new Rect(w / 3f, 0, 1, h), gridColor);
                 EditorGUI.DrawRect(new Rect(2f * w / 3f, 0, 1, h), gridColor);
+                
                 // Horizontal lines
                 EditorGUI.DrawRect(new Rect(0, h / 3f, w, 1), gridColor);
                 EditorGUI.DrawRect(new Rect(0, 2f * h / 3f, w, 1), gridColor);

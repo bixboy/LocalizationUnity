@@ -1,7 +1,7 @@
 using System;
 using UnityEngine;
 
-namespace Metroma.Camera
+namespace Metroma.CameraTool
 {
 
     [Serializable]

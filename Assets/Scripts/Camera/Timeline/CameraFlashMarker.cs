@@ -2,9 +2,9 @@ using System;
 using System.ComponentModel;
 using UnityEngine;
 using UnityEngine.Timeline;
-using Metroma.Camera.Modifiers;
+using Metroma.CameraTool.Modifiers;
 
-namespace Metroma.Camera.Timeline
+namespace Metroma.CameraTool.Timeline
 {
     /// <summary>
     /// Timeline marker: triggers a momentary screen flash.

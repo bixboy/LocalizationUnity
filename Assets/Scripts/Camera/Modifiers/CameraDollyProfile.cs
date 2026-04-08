@@ -1,6 +1,6 @@
 using UnityEngine;
 
-namespace Metroma.Camera.Modifiers
+namespace Metroma.CameraTool.Modifiers
 {
     [CreateAssetMenu(fileName = "NewDollyProfile", menuName = "Camera/Profiles/Dolly Zoom")]
     public class CameraDollyProfile : ScriptableObject

@@ -1,7 +1,7 @@
 using UnityEngine;
 using UnityEngine.InputSystem;
 
-namespace Metroma.Camera.Modifiers
+namespace Metroma.CameraTool.Modifiers
 {
     [RequireComponent(typeof(UnityEngine.Camera))]
     [DefaultExecutionOrder(100)]
@@ -93,9 +93,11 @@ namespace Metroma.Camera.Modifiers
                 }
         }
 
+        /// <summary> Adds a smooth position offset using a dual-phase (attack/return) animation. </summary>
         public void AddPositionOffset(Vector3 offset, float mainDuration, AnimationCurve mainCurve, float returnDuration, AnimationCurve returnCurve, bool invertReturn)
         {
             for (int i = 0; i < _posOffsets.Length; i++)
+            {
                 if (!_posOffsets[i].active)
                 {
                     _posOffsets[i] = new PosOffsetData { 
@@ -108,19 +110,21 @@ namespace Metroma.Camera.Modifiers
                         invertReturn = invertReturn,
                         active = true 
                     };
-                    
                     return;
                 }
+            }
         }
 
         public void AddPositionOffset(Vector3 offset, float duration, AnimationCurve curve)
         {
-            AddPositionOffset(offset, duration, curve, 0.25f, AnimationCurve.Linear(0, 1, 1, 0), false); // Old behavior didn't invert
+            AddPositionOffset(offset, duration, curve, 0.25f, AnimationCurve.Linear(0, 1, 1, 0), false);
         }
 
+        /// <summary> Adds a smooth rotation offset (Euler) using a dual-phase (attack/return) animation. </summary>
         public void AddRotationOffset(Vector3 euler, float mainDuration, AnimationCurve mainCurve, float returnDuration, AnimationCurve returnCurve, bool invertReturn)
         {
             for (int i = 0; i < _rotOffsets.Length; i++)
+            {
                 if (!_rotOffsets[i].active)
                 {
                     _rotOffsets[i] = new RotOffsetData { 
@@ -133,14 +137,14 @@ namespace Metroma.Camera.Modifiers
                         invertReturn = invertReturn,
                         active = true 
                     };
-                    
                     return;
                 }
+            }
         }
 
         public void AddRotationOffset(Vector3 euler, float duration, AnimationCurve curve)
         {
-            AddRotationOffset(euler, duration, curve, 0.25f, AnimationCurve.Linear(0, 1, 1, 0), false); // Old behavior didn't invert
+            AddRotationOffset(euler, duration, curve, 0.25f, AnimationCurve.Linear(0, 1, 1, 0), false);
         }
 
         public void SetHandheld(bool active, float amplitude = 1f, float frequency = 1f)

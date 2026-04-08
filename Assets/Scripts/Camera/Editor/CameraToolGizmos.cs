@@ -1,10 +1,10 @@
 using UnityEngine;
 using UnityEditor;
-using Metroma.Camera;
+using Metroma.CameraTool;
 using Dreamteck.Splines;
 using System.Collections.Generic;
 
-namespace Metroma.Camera.Editor
+namespace Metroma.CameraTool.Editor
 {
     /// <summary>
     /// Scene View gizmos for <see cref="CameraTool"/>:

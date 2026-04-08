@@ -1,5 +1,5 @@
-using Metroma.Camera;
-using Metroma.Camera.Modifiers;
+using Metroma.CameraTool;
+using Metroma.CameraTool.Modifiers;
 using UnityEngine;
 
 public class TestAnimCamera : MonoBehaviour

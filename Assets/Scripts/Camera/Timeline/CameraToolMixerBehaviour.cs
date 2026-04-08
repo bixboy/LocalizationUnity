@@ -1,6 +1,6 @@
 using UnityEngine.Playables;
 
-namespace Metroma.Camera.Timeline
+namespace Metroma.CameraTool.Timeline
 {
     /// <summary>
     /// Mixer that blends overlapping <see cref="CameraToolClip"/> clips

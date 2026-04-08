@@ -1,7 +1,7 @@
 using UnityEngine;
 using System.Collections;
 
-namespace Metroma.Camera.Modifiers
+namespace Metroma.CameraTool.Modifiers
 {
     /// <summary>
     /// Professional time management service for cinematic effects.

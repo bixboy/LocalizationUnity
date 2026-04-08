@@ -1,6 +1,6 @@
 using UnityEngine;
 
-namespace Metroma.Camera.Modifiers
+namespace Metroma.CameraTool.Modifiers
 {
     [CreateAssetMenu(fileName = "NewHandheldProfile", menuName = "Camera/Profiles/Handheld")]
     public class CameraHandheldProfile : ScriptableObject
