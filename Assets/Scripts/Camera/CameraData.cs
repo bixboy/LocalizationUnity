@@ -1,5 +1,7 @@
 using UnityEngine;
 using UnityEngine.Playables;
+using UnityEngine.Timeline;
+using System.Collections.Generic;
 
 namespace Metroma.CameraTool
 {
@@ -24,12 +26,24 @@ namespace Metroma.CameraTool
         }
     }
 
-    /// <summary> Defines a cinematic chapter with its own Timeline. </summary>
+    /// <summary> Defines a cinematic chapter with its own Timeline and pacing. </summary>
     [System.Serializable]
-    public struct CameraChapter
+    public class CameraChapter
     {
         public string name;
-        public PlayableDirector director;
+        public TimelineAsset timeline;
+        
+        [Tooltip("The rail index where this chapter starts its journey.")]
+        public int startRailIndex = 0;
+        
+        [Tooltip("Custom color for this chapter's gizmos.")]
+        public Color debugColor = Color.cyan;
+
+        [HideInInspector]
+        public bool isExpanded = true;
+
+        /// <summary> List of pacing segments specific to this chapter. </summary>
+        public List<CameraSplineSegment> segments = new List<CameraSplineSegment>();
     }
 
     /// <summary> Current state of the camera controller. </summary>

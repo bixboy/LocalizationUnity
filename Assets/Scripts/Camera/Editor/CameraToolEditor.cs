@@ -7,14 +7,10 @@ using UnityEngine.Timeline;
 using UnityEngine.Playables;
 using System.Collections.Generic;
 using Metroma.CameraTool.Modifiers;
+using UnityEditor.Timeline;
 
 namespace Metroma.CameraTool.Editor
 {
-    /// <summary>
-    /// Custom Inspector for <see cref="CameraTool"/>.
-    /// Styled header, status, segment manager, easing presets,
-    /// play preview, and timeline generation.
-    /// </summary>
     [CustomEditor(typeof(CameraTool))]
     public class CameraToolEditor : UnityEditor.Editor
     {
@@ -26,27 +22,27 @@ namespace Metroma.CameraTool.Editor
         private SerializedProperty _lookAtTargets;
         private SerializedProperty _splineProgress;
         private SerializedProperty _lookAtWeight;
-        private SerializedProperty _segments;
         private SerializedProperty _chapters;
+        private int _selectedChapterIndex = 0;
         private SerializedProperty _onChapterStart;
         private SerializedProperty _onChapterEnd;
 
         // ── Editor State ─────────────────────────────────────────────
-        private bool _foldReferences = true;
-        private bool _foldAnimation = true;
-        private bool _foldSegments = true;
-        private bool _foldChapters = true;
+        private bool _foldReferences = false;
+        private bool _foldAnimation = false;
+        private bool _foldSegments = false;
+        private bool _foldChapters = false;
         private bool _foldEvents = false;
-        private bool _foldDebug;
+        private bool _foldViewport = false;
+        private bool _foldHaptics = false;
+        private bool _foldDebug = false;
         private bool _isCameraLocked;
 
-        // ── HUD Settings ─────────────────────────────────────────────
         private bool _showHud;
         private bool _showGrid = true;
         private bool _showLetterbox = true;
-        private float _letterboxHeight = 0.12f; // 2.35:1 approx on 16:9
-        private bool _showHaptics;
-        
+        private float _letterboxHeight = 0.12f;
+
         // ── Preview State ────────────────────────────────────────────
         private bool _isPreviewing;
         private double _previewStartTime;
@@ -57,20 +53,17 @@ namespace Metroma.CameraTool.Editor
 
         // ── Style Cache ──────────────────────────────────────────────
         private static GUIStyle _headerStyle;
-        private static GUIStyle _subHeaderStyle;
         private static GUIStyle _statusOkStyle;
         private static GUIStyle _statusBadStyle;
-        private static GUIStyle _progressLabelStyle;
+        private static GUIStyle _sectionTitleStyle;
 
         // ── Colors ───────────────────────────────────────────────────
-        private static readonly Color HeaderColor = new Color(0.18f, 0.53f, 0.87f);
-        private static readonly Color SeparatorColor = new Color(0.18f, 0.53f, 0.87f, 0.6f);
-        private static readonly Color OkColor = new Color(0.2f, 0.8f, 0.3f);
-        private static readonly Color BadColor = new Color(0.9f, 0.25f, 0.2f);
-        private static readonly Color BoxBg = new Color(0.15f, 0.15f, 0.15f, 0.4f);
-        private static readonly Color WaitBarColor = new Color(1f, 0.6f, 0.1f, 0.5f);
-
-        // ══════════════════════════════════════════════════════════════
+        private static readonly Color CyanAccent = new Color(0.1f, 0.8f, 1f);
+        private static readonly Color HeaderBg = new Color(0.08f, 0.08f, 0.08f, 1f);
+        private static readonly Color OkColor = new Color(0.2f, 0.85f, 0.4f);
+        private static readonly Color BadColor = new Color(1f, 0.3f, 0.4f);
+        private static readonly Color WaitBarColor = new Color(1f, 0.6f, 0.1f, 0.4f);
+        private static readonly Color LineColor = new Color(1f, 1f, 1f, 0.08f);
 
         private void OnEnable()
         {
@@ -81,7 +74,6 @@ namespace Metroma.CameraTool.Editor
             _lookAtTargets = serializedObject.FindProperty("lookAtTargets");
             _splineProgress = serializedObject.FindProperty("splineProgress");
             _lookAtWeight = serializedObject.FindProperty("lookAtWeight");
-            _segments = serializedObject.FindProperty("segments");
             _chapters = serializedObject.FindProperty("chapters");
             _onChapterStart = serializedObject.FindProperty("onChapterStart");
             _onChapterEnd = serializedObject.FindProperty("onChapterEnd");
@@ -102,23 +94,42 @@ namespace Metroma.CameraTool.Editor
 
             CameraTool tool = (CameraTool)target;
 
+            // Calculate Progress for the Live Cursor
+            float currentProgress = -1;
+            if (_isPreviewing)
+            {
+                currentProgress = (float)((EditorApplication.timeSinceStartup - _previewStartTime) / _previewTotalDuration);
+            }
+            else if (Application.isPlaying && tool.EditorDirector != null && tool.EditorDirector.state == PlayState.Playing)
+            {
+                currentProgress = (float)(tool.EditorDirector.time / tool.EditorDirector.duration);
+            }
+
+            if (currentProgress >= 0 || _isPreviewing) Repaint();
+
             try
             {
-                DrawHeader();
-                DrawSeparator();
+                DrawSuiteHeader();
                 DrawStatusPanel(tool);
-                
+                EditorGUILayout.Space(8);
+
+                DrawRigSetup();
                 EditorGUILayout.Space(4);
                 
-                // --- Grouped Sections ---
-                DrawSystemConfig(tool);
-                DrawAnimationControls(tool);
-                DrawChapterManager(tool);
-                DrawSegmentManager(tool);
-                
+                DrawChapterWorkflow(tool);
                 EditorGUILayout.Space(4);
                 
-                DrawEditorUtilities(tool);
+                DrawSegmentsSection(tool, currentProgress);
+                EditorGUILayout.Space(4);
+                
+                DrawLookAtAndFX(tool);
+                EditorGUILayout.Space(4);
+                
+                DrawHUDSection();
+                EditorGUILayout.Space(4);
+                
+                DrawUtilitiesSection(tool);
+                EditorGUILayout.Space(12);
             }
             catch (ExitGUIException) { throw; }
             catch (System.Exception e) { Debug.LogException(e); }
@@ -126,933 +137,581 @@ namespace Metroma.CameraTool.Editor
             serializedObject.ApplyModifiedProperties();
         }
 
-        private void DrawSystemConfig(CameraTool tool)
+        // ── Section Drawing ──────────────────────────────────────────
+
+        private void DrawRigSetup()
         {
-            DrawReferencesSection();
-            DrawViewportSection();
-            DrawHapticsSection(tool);
+            _foldReferences = DrawSectionHeader("📐  Rig Setup", _foldReferences);
+            if (_foldReferences)
+            {
+                EditorGUI.indentLevel++;
+                EditorGUILayout.PropertyField(_splineRails, new GUIContent("Spline Rails"), true);
+                EditorGUILayout.PropertyField(_targetCamera, new GUIContent("Main Camera"));
+                EditorGUILayout.PropertyField(_playableDirector, new GUIContent("Master Director"));
+                EditorGUI.indentLevel--;
+            }
         }
 
-        private void DrawAnimationControls(CameraTool tool)
+        private void DrawChapterWorkflow(CameraTool tool)
         {
-            DrawAnimationSection(tool);
+            _foldChapters = DrawSectionHeader("🎞  Chapters & Sequences", _foldChapters);
+            if (_foldChapters)
+            {
+                DrawChaptersSection(tool);
+                DrawEventsSection();
+            }
         }
 
-        private void DrawChapterManager(CameraTool tool)
+        private void DrawSegmentsSection(CameraTool tool, float currentProgress)
         {
-            DrawChaptersSection(tool);
-            DrawEventsSection();
+            _foldSegments = DrawSectionHeader("⏱  Pacing & Segments", _foldSegments);
+            if (_foldSegments)
+            {
+                EditorGUI.indentLevel++;
+                EditorGUILayout.PropertyField(_splineProgress, new GUIContent("Manual Scrub"));
+                EditorGUI.indentLevel--;
+                
+                EditorGUILayout.Space(8);
+                DrawSegmentManager(tool, currentProgress);
+            }
         }
 
-        private void DrawEditorUtilities(CameraTool tool)
+        private void DrawLookAtAndFX(CameraTool tool)
         {
-            DrawQuickActions(tool);
-            DrawDebugSection(tool);
+            _foldAnimation = DrawSectionHeader("🎯  Targets & Effects", _foldAnimation);
+            if (_foldAnimation)
+            {
+                EditorGUI.indentLevel++;
+                EditorGUILayout.PropertyField(_lookAtTarget, new GUIContent("Default LookAt"));
+                EditorGUILayout.PropertyField(_lookAtTargets, new GUIContent("Target List"), true);
+                EditorGUILayout.PropertyField(_lookAtWeight, new GUIContent("LookAt Weight"));
+                
+                DrawThinSeparator();
+                DrawHapticsSection(tool);
+                EditorGUI.indentLevel--;
+            }
         }
 
-        // ══════════════════════════════════════════════════════════════
-        // Header
-        // ══════════════════════════════════════════════════════════════
-
-        private new void DrawHeader()
+        private void DrawHUDSection()
         {
-            EditorGUILayout.Space(4);
-            var rect = EditorGUILayout.GetControlRect(false, 32);
-            EditorGUI.DrawRect(rect, new Color(0.12f, 0.12f, 0.12f, 0.5f));
-            GUI.Label(rect, "  🎬  MÉTRŌMA Camera Tool", _headerStyle);
-            EditorGUILayout.Space(2);
+            _foldViewport = DrawSectionHeader("👁  Editor Viewport", _foldViewport);
+            if (_foldViewport)
+            {
+                DrawViewportSection();
+            }
         }
 
-        private static void DrawSeparator()
+        private void DrawUtilitiesSection(CameraTool tool)
         {
-            var rect = EditorGUILayout.GetControlRect(false, 3);
-            EditorGUI.DrawRect(rect, SeparatorColor);
-            EditorGUILayout.Space(4);
+            _foldDebug = DrawSectionHeader("🛠  Utilities", _foldDebug);
+            if (_foldDebug)
+            {
+                DrawQuickActions(tool);
+                DrawDebugSection(tool);
+            }
         }
 
-        private static void DrawThinSeparator()
-        {
-            var rect = EditorGUILayout.GetControlRect(false, 1);
-            EditorGUI.DrawRect(rect, new Color(0.3f, 0.3f, 0.3f, 0.5f));
-            EditorGUILayout.Space(2);
-        }
-
-        // ══════════════════════════════════════════════════════════════
-        // Status Panel
-        // ══════════════════════════════════════════════════════════════
+        // ── Core Component View ──────────────────────────────────────
 
         private void DrawStatusPanel(CameraTool tool)
         {
             bool hasRails = tool.EditorRailCount > 0;
             bool hasCamera = tool.EditorCamera != null;
 
-            EditorGUILayout.BeginVertical("helpbox");
-            EditorGUILayout.LabelField("Status", EditorStyles.miniBoldLabel);
-            DrawThinSeparator();
-
             EditorGUILayout.BeginHorizontal();
+            EditorGUILayout.Space(12);
             DrawStatusIndicator($"Rails: {tool.EditorRailCount}", hasRails);
             GUILayout.FlexibleSpace();
             DrawStatusIndicator("Camera", hasCamera);
             GUILayout.FlexibleSpace();
-
-            bool hasLookAt = tool.EditorLookAtTarget != null;
-            if (hasLookAt)
-            {
-                GUIStyle lookStyle = new GUIStyle(EditorStyles.miniLabel)
-                {
-                    normal = { textColor = new Color(1f, 0.5f, 0.3f) },
-                    fontStyle = FontStyle.Bold
-                };
-
-                GUILayout.Label("🎯 LookAt", lookStyle);
-                GUILayout.FlexibleSpace();
-            }
-
+            
             bool ready = hasRails && hasCamera;
-            GUIStyle readyStyle = ready ? _statusOkStyle : _statusBadStyle;
-            GUILayout.Label(ready ? "● READY" : "● NOT READY", readyStyle);
-
+            GUILayout.Label(ready ? "● READY" : "● NOT READY", ready ? _statusOkStyle : _statusBadStyle);
             EditorGUILayout.EndHorizontal();
-            EditorGUILayout.EndVertical();
+            DrawThinSeparator();
         }
 
         private void DrawStatusIndicator(string label, bool ok)
         {
-            GUIStyle style = ok ? _statusOkStyle : _statusBadStyle;
-            GUILayout.Label($"{(ok ? "✔" : "✘")}  {label}", style);
-        }
-
-        // ══════════════════════════════════════════════════════════════
-        // References Section
-        // ══════════════════════════════════════════════════════════════
-
-        private void DrawReferencesSection()
-        {
-            _foldReferences = DrawSectionHeader("📎  References", _foldReferences);
-            if (!_foldReferences)
-                return;
-
-            EditorGUI.indentLevel++;
-            EditorGUILayout.PropertyField(_splineRails, new GUIContent("Spline Rails"), true);
-            EditorGUILayout.PropertyField(_targetCamera, new GUIContent("Target Camera"));
-            EditorGUILayout.PropertyField(_playableDirector, new GUIContent("Playable Director"));
-            EditorGUILayout.Space(2);
-            EditorGUILayout.PropertyField(_lookAtTarget, new GUIContent("🎯 Default Target"));
-            EditorGUILayout.PropertyField(_lookAtTargets, new GUIContent("🎯 Target List"), true);
-            EditorGUI.indentLevel--;
-
-            EditorGUILayout.Space(4);
-        }
-
-        // ══════════════════════════════════════════════════════════════
-        // Animation Section
-        // ══════════════════════════════════════════════════════════════
-
-        private void DrawAnimationSection(CameraTool tool)
-        {
-            _foldAnimation = DrawSectionHeader("🎞  Animation Settings", _foldAnimation);
-            if (!_foldAnimation)
-                return;
-
-            EditorGUI.indentLevel++;
-
-            // ── Progress slider ──
-            EditorGUI.BeginChangeCheck();
-            EditorGUILayout.PropertyField(_splineProgress, new GUIContent("Spline Progress"));
-
-            if (EditorGUI.EndChangeCheck() && !Application.isPlaying)
-            {
-                serializedObject.ApplyModifiedProperties();
-                tool.EditorEvaluateAt(_splineProgress.floatValue);
-                SceneView.RepaintAll();
-            }
-
-            // ── Visual progress bar ──
-            Rect barRect = EditorGUILayout.GetControlRect(false, 20);
-            barRect = EditorGUI.IndentedRect(barRect);
-            float progress = _splineProgress.floatValue;
-
-            EditorGUI.DrawRect(barRect, new Color(0.1f, 0.1f, 0.1f, 0.8f));
-            
-            Rect fillRect = barRect;
-            fillRect.width *= progress;
-            Color barColor = Color.Lerp(new Color(0.2f, 0.6f, 1f), new Color(0.1f, 0.9f, 0.4f), progress);
-            
-            EditorGUI.DrawRect(fillRect, barColor);
-            GUI.Label(barRect, $"  {progress * 100f:F1}%", _progressLabelStyle);
-
-            // ── LookAt weight slider ──
-            EditorGUILayout.Space(2);
-            EditorGUI.BeginChangeCheck();
-            EditorGUILayout.PropertyField(_lookAtWeight, new GUIContent("🎯 LookAt Weight"));
-            if (EditorGUI.EndChangeCheck() && !Application.isPlaying)
-            {
-                serializedObject.ApplyModifiedProperties();
-                tool.EditorEvaluateAt(_splineProgress.floatValue);
-                SceneView.RepaintAll();
-            }
-
-            EditorGUI.indentLevel--;
-            EditorGUILayout.Space(4);
-        }
-
-        private void DrawViewportSection()
-        {
-            _showHud = DrawSectionHeader("👁  Viewport HUD", _showHud);
-            if (!_showHud)
-                return;
-
-            EditorGUI.indentLevel++;
-            _showGrid = EditorGUILayout.Toggle("Rule of Thirds", _showGrid);
-            _showLetterbox = EditorGUILayout.Toggle("Cinematic Letterbox", _showLetterbox);
-            if (_showLetterbox)
-            {
-                _letterboxHeight = EditorGUILayout.Slider("Letterbox Size", _letterboxHeight, 0.05f, 0.25f);
-            }
-
-            EditorGUI.indentLevel--;
-            EditorGUILayout.Space(4);
-        }
-
-        private void DrawHapticsSection(CameraTool tool)
-        {
-            _showHaptics = DrawSectionHeader("🎮  Gamepad Haptics", _showHaptics);
-            if (!_showHaptics)
-                return;
-
-            EditorGUI.indentLevel++;
-
-            var cam = tool.TargetCamera;
-            if (!cam)
-            {
-                EditorGUILayout.HelpBox("Assign a Target Camera to manage haptics.", MessageType.Warning);
-            }
-            else
-            {
-                var h = cam.GetComponent<CameraModifierHandler>();
-                if (!h)
-                {
-                    EditorGUILayout.BeginHorizontal();
-                    EditorGUILayout.HelpBox("CameraModifierHandler missing.", MessageType.Info);
-                    
-                    if (GUILayout.Button("Add", GUILayout.Width(40)))
-                        cam.gameObject.AddComponent<CameraModifierHandler>();
-                    
-                    EditorGUILayout.EndHorizontal();
-                }
-                else
-                {
-                    EditorGUI.BeginChangeCheck();
-                    h.enableGamepadHaptics = EditorGUILayout.Toggle("Enable Vibration", h.enableGamepadHaptics);
-                    h.hapticMultiplier = EditorGUILayout.Slider("Vibration Power", h.hapticMultiplier, 0f, 2f);
-                    
-                    if (EditorGUI.EndChangeCheck())
-                    {
-                        EditorUtility.SetDirty(h);
-                    }
-                }
-            }
-
-            EditorGUI.indentLevel--;
-            EditorGUILayout.Space(4);
+            GUILayout.Label($"{(ok ? "✔" : "✘")}  {label}", ok ? _statusOkStyle : _statusBadStyle);
         }
 
         private void DrawChaptersSection(CameraTool tool)
         {
-            _foldChapters = DrawSectionHeader("📚  Chapters Manager", _foldChapters);
-            if (!_foldChapters)
-                return;
-
-            EditorGUI.indentLevel++;
-
-            if (_chapters.arraySize == 0)
+            EditorGUILayout.BeginHorizontal();
+            EditorGUILayout.Space(12);
+            if (GUILayout.Button("⟳  SCAN PROJECT", GUILayout.Height(26))) AutoScanChapters(tool);
+            if (GUILayout.Button("🗑  CLEAR", GUILayout.Width(80), GUILayout.Height(26)))
             {
-                EditorGUILayout.HelpBox("No chapters defined. Add one to organize your Timelines.", MessageType.Info);
+                if (EditorUtility.DisplayDialog("Clear Chapters", "Delete all?", "Yes", "No"))
+                {
+                    _chapters.arraySize = 0;
+                    _selectedChapterIndex = 0;
+                }
             }
+            EditorGUILayout.Space(12);
+            EditorGUILayout.EndHorizontal();
+            EditorGUILayout.Space(8);
 
             for (int i = 0; i < _chapters.arraySize; i++)
             {
                 SerializedProperty chapterProp = _chapters.GetArrayElementAtIndex(i);
                 SerializedProperty nameProp = chapterProp.FindPropertyRelative("name");
-                SerializedProperty directorProp = chapterProp.FindPropertyRelative("director");
+                SerializedProperty timelineProp = chapterProp.FindPropertyRelative("timeline");
+                SerializedProperty railIdxProp = chapterProp.FindPropertyRelative("startRailIndex");
+                SerializedProperty colorProp = chapterProp.FindPropertyRelative("debugColor");
+                SerializedProperty isExpanded = chapterProp.FindPropertyRelative("isExpanded");
 
-                EditorGUILayout.BeginVertical("helpbox");
-                EditorGUILayout.BeginHorizontal();
-                
-                // Display Index
-                GUILayout.Label($"#{i}", EditorStyles.miniBoldLabel, GUILayout.Width(25));
-                
-                // Fields
-                EditorGUILayout.PropertyField(nameProp, GUIContent.none, GUILayout.Width(100));
-                EditorGUILayout.PropertyField(directorProp, GUIContent.none);
+                bool isSelected = (_selectedChapterIndex == i);
 
-                // Play Button
-                GUI.backgroundColor = new Color(0.2f, 0.8f, 0.4f);
-                if (GUILayout.Button("▶ Play", GUILayout.Width(55)))
+                // --- Chapter Item Container ---
+                EditorGUILayout.BeginVertical();
+                
+                // Selection highlight & line
+                var rect = EditorGUILayout.BeginHorizontal(GUILayout.Height(32));
+                if (isSelected)
                 {
-                    if (Application.isPlaying)
+                    EditorGUI.DrawRect(new Rect(rect.x, rect.y, rect.width, rect.height), new Color(0.1f, 0.8f, 1f, 0.05f));
+                    EditorGUI.DrawRect(new Rect(rect.x, rect.y, 2, rect.height), CyanAccent);
+                }
+
+                EditorGUILayout.Space(12);
+                isExpanded.boolValue = EditorGUILayout.Foldout(isExpanded.boolValue, $"#{i}  {nameProp.stringValue}", true);
+
+                GUILayout.FlexibleSpace();
+
+                // Actions
+                if (GUILayout.Button(isSelected ? "● FOCUSED" : "🎯 FOCUS", isSelected ? EditorStyles.miniButtonMid : EditorStyles.miniButton, GUILayout.Width(85), GUILayout.Height(20)))
+                {
+                    _selectedChapterIndex = i;
+                    if (timelineProp.objectReferenceValue is TimelineAsset asset && tool.EditorDirector != null)
                     {
-                        tool.PlayChapter(i);
+                        Undo.RecordObject(tool.EditorDirector, "Focus Chapter");
+                        tool.EditorDirector.playableAsset = asset;
+                        Selection.activeObject = tool.gameObject;
+                        EditorApplication.ExecuteMenuItem("Window/Sequencing/Timeline");
+                        TimelineEditor.Refresh(RefreshReason.ContentsModified);
                     }
-                    else
-                    {
-                        EditorUtility.DisplayDialog("CameraTool", "Play mode required to test chapter transitions.", "OK");
-                    }
+                }
+
+                GUI.backgroundColor = OkColor;
+                if (GUILayout.Button("▶", GUILayout.Width(25), GUILayout.Height(20)))
+                {
+                    if (Application.isPlaying) tool.PlayChapter(i);
+                    else EditorUtility.DisplayDialog("CameraTool", "Enter Play Mode to test.", "OK");
                 }
                 GUI.backgroundColor = Color.white;
 
-                // Delete Button
-                if (GUILayout.Button("✕", GUILayout.Width(22)))
+                if (GUILayout.Button("✕", EditorStyles.miniLabel, GUILayout.Width(20), GUILayout.Height(20)))
                 {
                     _chapters.DeleteArrayElementAtIndex(i);
-                    serializedObject.ApplyModifiedProperties();
+                    EditorGUILayout.EndHorizontal();
+                    EditorGUILayout.EndVertical();
                     break;
                 }
-
                 EditorGUILayout.EndHorizontal();
+
+                // Expanded Drawer
+                if (isExpanded.boolValue)
+                {
+                    EditorGUILayout.BeginHorizontal();
+                    EditorGUILayout.Space(30);
+                    EditorGUILayout.BeginVertical();
+                    EditorGUILayout.PropertyField(nameProp);
+                    EditorGUILayout.PropertyField(timelineProp);
+                    EditorGUILayout.PropertyField(railIdxProp);
+                    EditorGUILayout.PropertyField(colorProp, new GUIContent("Debug Color"));
+                    EditorGUILayout.Space(8);
+                    EditorGUILayout.EndVertical();
+                    EditorGUILayout.EndHorizontal();
+                }
+
                 EditorGUILayout.EndVertical();
+                DrawThinSeparator();
+                EditorGUILayout.Space(2);
             }
 
-            if (GUILayout.Button("+ Add Chapter"))
+            EditorGUILayout.Space(8);
+            EditorGUILayout.BeginHorizontal();
+            EditorGUILayout.Space(12);
+            if (GUILayout.Button("+ ADD MANUAL CHAPTER", GUILayout.Height(24)))
             {
                 _chapters.arraySize++;
-                var newChapter = _chapters.GetArrayElementAtIndex(_chapters.arraySize - 1);
-                newChapter.FindPropertyRelative("name").stringValue = $"Chapter {_chapters.arraySize}";
-                newChapter.FindPropertyRelative("director").objectReferenceValue = null;
-                serializedObject.ApplyModifiedProperties();
+                var c = _chapters.GetArrayElementAtIndex(_chapters.arraySize - 1);
+                c.FindPropertyRelative("name").stringValue = "New Sequence";
+                c.FindPropertyRelative("isExpanded").boolValue = true;
+            }
+            EditorGUILayout.Space(12);
+            EditorGUILayout.EndHorizontal();
+        }
+
+
+        private void DrawSegmentManager(CameraTool tool, float currentProgress)
+        {
+            if (_chapters.arraySize == 0) return;
+
+            _selectedChapterIndex = Mathf.Clamp(_selectedChapterIndex, 0, _chapters.arraySize - 1);
+            SerializedProperty chapter = _chapters.GetArrayElementAtIndex(_selectedChapterIndex);
+            SerializedProperty segmentsProp = chapter.FindPropertyRelative("segments");
+
+            EditorGUILayout.BeginHorizontal();
+            EditorGUILayout.Space(12);
+            GUI.enabled = false;
+            EditorGUILayout.LabelField($"ACTIVE: {chapter.FindPropertyRelative("name").stringValue.ToUpper()}", EditorStyles.miniLabel);
+            GUI.enabled = true;
+            GUILayout.FlexibleSpace();
+            if (GUILayout.Button("⟳ SYNC RAIL NODES", EditorStyles.miniButton, GUILayout.Width(130))) tool.EditorSyncSegments(_selectedChapterIndex);
+            EditorGUILayout.Space(12);
+            EditorGUILayout.EndHorizontal();
+
+            EditorGUILayout.Space(4);
+            DrawDurationTimeline(segmentsProp, currentProgress);
+            
+            // Display Total Time
+            float totalDur = 0;
+            float totalWait = 0;
+            for (int i = 0; i < segmentsProp.arraySize; i++)
+            {
+                var s = segmentsProp.GetArrayElementAtIndex(i);
+                totalDur += s.FindPropertyRelative("duration").floatValue;
+                totalWait += s.FindPropertyRelative("waitAtEnd").floatValue;
+            }
+            EditorGUILayout.BeginHorizontal();
+            GUILayout.FlexibleSpace();
+            var timeStyle = new GUIStyle(EditorStyles.miniLabel) { fontStyle = FontStyle.Bold, normal = { textColor = CyanAccent } };
+            var waitStyle = new GUIStyle(EditorStyles.miniLabel) { fontStyle = FontStyle.Bold, normal = { textColor = WaitBarColor } };
+            
+            GUILayout.Label($"TOTAL DURATION: {totalDur + totalWait:F2}s", timeStyle);
+            EditorGUILayout.Space(8);
+            GUILayout.Label($"[ WAIT: {totalWait:F2}s ]", waitStyle);
+            EditorGUILayout.Space(12);
+            EditorGUILayout.EndHorizontal();
+
+            EditorGUILayout.Space(8);
+            
+            for (int i = 0; i < segmentsProp.arraySize; i++)
+            {
+                DrawSegmentCard(segmentsProp.GetArrayElementAtIndex(i), i, segmentsProp.arraySize);
             }
 
+            EditorGUILayout.Space(8);
+            EditorGUILayout.BeginHorizontal();
+            EditorGUILayout.Space(40);
+            if (GUILayout.Button("🎬  GENERATE TIMELINE CLIPS", GUILayout.Height(30)))
+                GenerateTimelineClips(tool, _selectedChapterIndex);
+            EditorGUILayout.Space(40);
+            EditorGUILayout.EndHorizontal();
+        }
+
+        private void DrawSegmentCard(SerializedProperty seg, int index, int totalCount)
+        {
+            EditorGUILayout.BeginHorizontal(GUILayout.Height(32));
+            EditorGUILayout.Space(12);
+            
+            // Colorful indicator matching the timeline
+            var dotRect = EditorGUILayout.GetControlRect(false, 20, GUILayout.Width(10));
+            EditorGUI.DrawRect(new Rect(dotRect.x, dotRect.y + 6, 6, 12), Color.HSVToRGB((float)index / totalCount, 0.6f, 0.9f));
+
+            EditorGUILayout.LabelField(seg.FindPropertyRelative("label").stringValue, EditorStyles.miniBoldLabel, GUILayout.Width(110));
+
+            // Curve Thumbnail
+            var curveRect = EditorGUILayout.GetControlRect(false, 18, GUILayout.Width(35));
+            DrawMiniCurve(curveRect, seg.FindPropertyRelative("easing").animationCurveValue);
+            EditorGUILayout.Space(5);
+
+            EditorGUIUtility.labelWidth = 35;
+            EditorGUILayout.PropertyField(seg.FindPropertyRelative("duration"), new GUIContent("Dur"));
+            EditorGUILayout.PropertyField(seg.FindPropertyRelative("waitAtEnd"), new GUIContent("Wait"));
+            EditorGUIUtility.labelWidth = 0;
+            
+            EditorGUILayout.Space(12);
+            EditorGUILayout.EndHorizontal();
+            DrawThinSeparator();
+        }
+
+        private void DrawMiniCurve(Rect rect, AnimationCurve curve)
+        {
+            EditorGUI.DrawRect(rect, new Color(0, 0, 0, 0.3f));
+            if (curve == null) return;
+            
+            Handles.BeginGUI();
+            Handles.color = CyanAccent;
+            int samples = 8;
+            Vector3 lastPos = new Vector3(rect.x, rect.yMax - curve.Evaluate(0) * rect.height, 0);
+            for (int i = 1; i <= samples; i++)
+            {
+                float t = (float)i / samples;
+                Vector3 pos = new Vector3(rect.x + t * rect.width, rect.yMax - curve.Evaluate(t) * rect.height, 0);
+                Handles.DrawLine(lastPos, pos);
+                lastPos = pos;
+            }
+            Handles.EndGUI();
+        }
+
+        private void DrawDurationTimeline(SerializedProperty segments, float progress)
+        {
+            float total = 0;
+            for (int i = 0; i < segments.arraySize; i++)
+            {
+                total += segments.GetArrayElementAtIndex(i).FindPropertyRelative("duration").floatValue;
+                total += segments.GetArrayElementAtIndex(i).FindPropertyRelative("waitAtEnd").floatValue;
+            }
+            if (total <= 0) return;
+
+            Rect rect = EditorGUILayout.GetControlRect(false, 18);
+            EditorGUI.DrawRect(rect, new Color(1,1,1, 0.05f));
+            float x = 0;
+            for (int i = 0; i < segments.arraySize; i++)
+            {
+                var s = segments.GetArrayElementAtIndex(i);
+                float dur = s.FindPropertyRelative("duration").floatValue;
+                float wait = s.FindPropertyRelative("waitAtEnd").floatValue;
+                
+                float w = (dur / total) * rect.width;
+                EditorGUI.DrawRect(new Rect(rect.x + x, rect.y, w, rect.height), Color.HSVToRGB((float)i / segments.arraySize, 0.6f, 0.8f));
+                x += w;
+                
+                float ww = (wait / total) * rect.width;
+                EditorGUI.DrawRect(new Rect(rect.x + x, rect.y, ww, rect.height), WaitBarColor);
+                x += ww;
+            }
+
+            // Draw Live Cursor
+            if (progress >= 0 && progress <= 1)
+            {
+                float cursorX = rect.x + (progress * rect.width);
+                EditorGUI.DrawRect(new Rect(cursorX - 1, rect.y - 4, 3, rect.height + 8), Color.white);
+                EditorGUI.DrawRect(new Rect(cursorX - 4, rect.y - 6, 9, 3), CyanAccent); // Cursor head
+            }
+        }
+
+        private void DrawHapticsSection(CameraTool tool)
+        {
+            _foldHaptics = DrawSectionHeader("🎮  Gamepad Haptics", _foldHaptics);
+            if (!_foldHaptics) return;
+
+            if (tool.EditorCamera == null) return;
+            var h = tool.EditorCamera.GetComponent<CameraModifierHandler>();
+            if (h == null)
+            {
+                if (GUILayout.Button("Add Haptic Handler")) tool.EditorCamera.gameObject.AddComponent<CameraModifierHandler>();
+                return;
+            }
+            h.enableGamepadHaptics = EditorGUILayout.Toggle("Vibration", h.enableGamepadHaptics);
+            h.hapticMultiplier = EditorGUILayout.Slider("Power", h.hapticMultiplier, 0, 2);
+        }
+
+        private void DrawViewportSection()
+        {
+            EditorGUI.indentLevel++;
+            _showHud = EditorGUILayout.Toggle("Show HUD", _showHud);
+            _showGrid = EditorGUILayout.Toggle("Rule of Thirds", _showGrid);
+            _showLetterbox = EditorGUILayout.Toggle("Letterbox", _showLetterbox);
+            if (_showLetterbox) _letterboxHeight = EditorGUILayout.Slider("Size", _letterboxHeight, 0.05f, 0.3f);
             EditorGUI.indentLevel--;
-            EditorGUILayout.Space(4);
+        }
+
+        private void DrawQuickActions(CameraTool tool)
+        {
+            EditorGUILayout.BeginHorizontal();
+            if (GUILayout.Button("⏮ Start")) tool.EditorEvaluateAt(0);
+            if (GUILayout.Button("⏭ End")) tool.EditorEvaluateAt(1);
+            if (GUILayout.Button(_isCameraLocked ? "🔒 Locked" : "📍 Lock", _isCameraLocked ? EditorStyles.miniButtonMid : EditorStyles.miniButton))
+            {
+                _isCameraLocked = !_isCameraLocked;
+                if (_isCameraLocked && tool.EditorCamera) SceneView.lastActiveSceneView?.AlignViewToObject(tool.EditorCamera.transform);
+            }
+            EditorGUILayout.EndHorizontal();
+
+            if (!_isPreviewing)
+            {
+                GUI.backgroundColor = OkColor;
+                if (GUILayout.Button("▶  Preview Animation", GUILayout.Height(28))) StartPreview(tool);
+            }
+            else
+            {
+                GUI.backgroundColor = BadColor;
+                if (GUILayout.Button("⏹  Stop Preview", GUILayout.Height(28))) StopPreview();
+            }
+            GUI.backgroundColor = Color.white;
+        }
+
+        private void DrawDebugSection(CameraTool tool)
+        {
+            if (tool.EditorRailCount > 0)
+            {
+                var sample = tool.EditorSampleAt(_splineProgress.floatValue);
+                EditorGUILayout.Vector3Field("Pos", sample.position);
+            }
         }
 
         private void DrawEventsSection()
         {
-            _foldEvents = DrawSectionHeader("🔔  Chapter Lifecycle", _foldEvents);
-            if (!_foldEvents)
-                return;
+            _foldEvents = DrawSectionHeader("🔔  Lifecycle Events", _foldEvents);
+            if (!_foldEvents) return;
 
             EditorGUI.indentLevel++;
-            EditorGUILayout.PropertyField(_onChapterStart, new GUIContent("On Chapter Start"));
-            EditorGUILayout.PropertyField(_onChapterEnd, new GUIContent("On Chapter End"));
+            EditorGUILayout.PropertyField(_onChapterStart);
+            EditorGUILayout.PropertyField(_onChapterEnd);
             EditorGUI.indentLevel--;
+        }
+
+        // ── Helpers ──────────────────────────────────────────────────
+
+        private void DrawSuiteHeader()
+        {
+            var rect = EditorGUILayout.GetControlRect(false, 40);
+            EditorGUI.DrawRect(rect, HeaderBg);
             
-            EditorGUILayout.Space(4);
-        }
+            // Thin Cyan Bottom Line
+            EditorGUI.DrawRect(new Rect(rect.x, rect.yMax - 2, rect.width, 2), CyanAccent);
 
-        // ══════════════════════════════════════════════════════════════
-        // Segment Manager
-        // ══════════════════════════════════════════════════════════════
-
-        private void DrawSegmentManager(CameraTool tool)
-        {
-            _foldSegments = DrawSectionHeader("🔗  Segment Manager", _foldSegments);
-            if (!_foldSegments)
-                return;
-
-            EditorGUI.indentLevel++;
-
-            // ── Info + Sync ──
-            EditorGUILayout.BeginHorizontal();
-            int pointCount = tool.EditorPointCount;
-            int segmentCount = _segments.arraySize;
-            EditorGUILayout.LabelField($"Rails: {tool.EditorRailCount}  |  Nodes: {pointCount}  |  Segments: {segmentCount}",
-                EditorStyles.miniLabel);
-
-            if (GUILayout.Button("⟳ Sync", GUILayout.Width(70), GUILayout.Height(20)))
-            {
-                Undo.RecordObject(tool, "Sync Camera Segments");
-                tool.EditorSyncSegments();
-                EditorUtility.SetDirty(tool);
-                serializedObject.SetIsDifferentCacheDirty();
-                serializedObject.Update();
-            }
-            EditorGUILayout.EndHorizontal();
-
-            if (segmentCount == 0)
-            {
-                EditorGUILayout.HelpBox("Click \"Sync\" to populate segments from the spline rails.", MessageType.Info);
-                EditorGUI.indentLevel--;
-                EditorGUILayout.Space(4);
-                return;
-            }
-
-            EditorGUILayout.Space(4);
-            DrawDurationTimeline(_segments);
-            EditorGUILayout.Space(4);
-
-            // ── Per-segment cards ──
-            for (int i = 0; i < _segments.arraySize; i++)
-                DrawSegmentCard(i, tool);
-
-            // ── Totals ──
-            float totalDuration = 0f, totalWait = 0f;
-            for (int i = 0; i < _segments.arraySize; i++)
-            {
-                var seg = _segments.GetArrayElementAtIndex(i);
-                totalDuration += seg.FindPropertyRelative("duration").floatValue;
-                totalWait += seg.FindPropertyRelative("waitAtEnd").floatValue;
-            }
-
-            DrawThinSeparator();
-            EditorGUILayout.BeginHorizontal();
-            EditorGUILayout.LabelField($"⏱ Total: {totalDuration + totalWait:F1}s", EditorStyles.boldLabel);
-            EditorGUILayout.LabelField($"(Move: {totalDuration:F1}s  +  Wait: {totalWait:F1}s)", EditorStyles.miniLabel);
-            EditorGUILayout.EndHorizontal();
-
-            EditorGUILayout.Space(6);
-
-            // ── Generate Timeline ──
-            GUI.backgroundColor = new Color(0.2f, 0.7f, 1f);
-            if (GUILayout.Button("🎬  Generate Timeline Clips", GUILayout.Height(30)))
-                GenerateTimelineClips(tool);
-                
-            GUI.backgroundColor = Color.white;
-
-            EditorGUI.indentLevel--;
-            EditorGUILayout.Space(4);
-        }
-
-        private void DrawSegmentCard(int index, CameraTool tool)
-        {
-            SerializedProperty segProp = _segments.GetArrayElementAtIndex(index);
-            SerializedProperty labelProp = segProp.FindPropertyRelative("label");
-            SerializedProperty durationProp = segProp.FindPropertyRelative("duration");
-            SerializedProperty easingProp = segProp.FindPropertyRelative("easing");
-            SerializedProperty waitProp = segProp.FindPropertyRelative("waitAtEnd");
-
-            int segmentCount = _segments.arraySize;
-            float startProgress = (float)index / segmentCount;
-            float endProgress = (float)(index + 1) / segmentCount;
-
-            EditorGUILayout.BeginVertical("helpbox");
-
-            // ── Header ──
-            EditorGUILayout.BeginHorizontal();
-            EditorGUILayout.LabelField(labelProp.stringValue, EditorStyles.miniBoldLabel, GUILayout.Width(120));
-            EditorGUILayout.LabelField($"{durationProp.floatValue:F1}s", EditorStyles.miniLabel, GUILayout.Width(40));
-
-            if (waitProp.floatValue > 0f)
-            {
-                GUIStyle ws = new GUIStyle(EditorStyles.miniLabel) { normal = { textColor = new Color(1f, 0.6f, 0.1f) } };
-                EditorGUILayout.LabelField($"+ {waitProp.floatValue:F1}s", ws, GUILayout.Width(50));
-            }
+            var labelRect = new Rect(rect.x + 12, rect.y + 8, rect.width, 24);
+            GUI.Label(labelRect, "MÉTRŌMA  |  CAMERA SUITE", _headerStyle);
             
-            EditorGUILayout.EndHorizontal();
-
-            // ── Fields ──
-            EditorGUILayout.PropertyField(durationProp, new GUIContent("Duration (sec)"));
-            EditorGUILayout.PropertyField(easingProp, new GUIContent("Easing"));
-            EditorGUILayout.PropertyField(waitProp, new GUIContent("Pause at End"));
-
-            // ── Easing Presets ──
-            EditorGUILayout.BeginHorizontal();
-            GUIStyle ps = EditorStyles.miniButton;
-            if (GUILayout.Button("Linear", ps))
-                easingProp.animationCurveValue = AnimationCurve.Linear(0, 0, 1, 1);
-
-            if (GUILayout.Button("Ease", ps))
-                easingProp.animationCurveValue = AnimationCurve.EaseInOut(0, 0, 1, 1);
-                
-            if (GUILayout.Button("Ease In", ps))
-                easingProp.animationCurveValue = new AnimationCurve(
-                    new Keyframe(0, 0, 0, 0), 
-                    new Keyframe(1, 1, 2, 0));
+            var versionStyle = new GUIStyle(EditorStyles.miniLabel) { alignment = TextAnchor.LowerRight, normal = { textColor = new Color(1,1,1,0.3f) } };
+            GUI.Label(new Rect(rect.xMax - 70, rect.y + 18, 60, 15), "V2.0 PRO", versionStyle);
             
-            if (GUILayout.Button("Ease Out", ps))
-                easingProp.animationCurveValue = new AnimationCurve(
-                    new Keyframe(0, 0, 0, 2),
-                    new Keyframe(1, 1, 0, 0));
-            
-            if (GUILayout.Button("Slow", ps))
-                easingProp.animationCurveValue = new AnimationCurve(
-                    new Keyframe(0, 0, 0, 0),
-                    new Keyframe(0.5f, 0.5f, 0.3f, 0.3f),
-                    new Keyframe(1, 1, 0, 0));
-            
-            EditorGUILayout.EndHorizontal();
-
-            // ── Preview buttons ──
-            EditorGUILayout.BeginHorizontal();
-            GUIStyle pvs = new GUIStyle(EditorStyles.miniButton) { fixedHeight = 18 };
-            if (GUILayout.Button($"📍 Start ({startProgress * 100f:F0}%)", pvs))
-            {
-                if (tool.EditorRailCount > 0)
-                {
-                    tool.EditorEvaluateAt(startProgress);
-                    SceneView.RepaintAll();
-                }
-            }
-            if (GUILayout.Button($"📍 End ({endProgress * 100f:F0}%)", pvs))
-            {
-                if (tool.EditorRailCount > 0)
-                {
-                    tool.EditorEvaluateAt(endProgress);
-                    SceneView.RepaintAll();
-                }
-            }
-            EditorGUILayout.EndHorizontal();
-
-            EditorGUILayout.EndVertical();
-            EditorGUILayout.Space(2);
+            EditorGUILayout.Space(8);
         }
-
-        private static void DrawDurationTimeline(SerializedProperty segments)
-        {
-            float totalTime = 0f;
-            for (int i = 0; i < segments.arraySize; i++)
-            {
-                var seg = segments.GetArrayElementAtIndex(i);
-                totalTime += seg.FindPropertyRelative("duration").floatValue;
-                totalTime += seg.FindPropertyRelative("waitAtEnd").floatValue;
-            }
-            if (totalTime <= 0f)
-                return;
-
-            Rect barRect = EditorGUILayout.GetControlRect(false, 16);
-            barRect = EditorGUI.IndentedRect(barRect);
-            EditorGUI.DrawRect(barRect, new Color(0.08f, 0.08f, 0.08f, 0.8f));
-
-            float xOffset = 0f;
-            for (int i = 0; i < segments.arraySize; i++)
-            {
-                var seg = segments.GetArrayElementAtIndex(i);
-                float dur = seg.FindPropertyRelative("duration").floatValue;
-                float wait = seg.FindPropertyRelative("waitAtEnd").floatValue;
-
-                float moveW = (dur / totalTime) * barRect.width;
-                Rect moveRect = new Rect(barRect.x + xOffset, barRect.y, moveW, barRect.height);
-                Color c = Color.HSVToRGB((float)i / segments.arraySize * 0.6f, 0.5f, 0.85f);
-                c.a = 0.7f;
-                EditorGUI.DrawRect(moveRect, c);
-
-                if (moveW > 25f)
-                {
-                    GUIStyle ms = new GUIStyle(EditorStyles.miniLabel) {
-                        alignment = TextAnchor.MiddleCenter, normal = { textColor = Color.white }, fontSize = 9 };
-                    GUI.Label(moveRect, $"{i}", ms);
-                }
-                xOffset += moveW;
-
-                if (wait > 0f)
-                {
-                    float waitW = (wait / totalTime) * barRect.width;
-                    EditorGUI.DrawRect(new Rect(barRect.x + xOffset, barRect.y, waitW, barRect.height), WaitBarColor);
-                    xOffset += waitW;
-                }
-            }
-        }
-
-        // ══════════════════════════════════════════════════════════════
-        // Timeline Generation
-        // ══════════════════════════════════════════════════════════════
-
-        private void GenerateTimelineClips(CameraTool tool)
-        {
-            PlayableDirector director = tool.EditorDirector;
-            if (!director)
-            {
-                EditorUtility.DisplayDialog("CameraTool", "Assign a PlayableDirector first.", "OK");
-                return;
-            }
-
-            TimelineAsset timeline = director.playableAsset as TimelineAsset;
-            if (!timeline)
-            {
-                EditorUtility.DisplayDialog("CameraTool", "No TimelineAsset on the PlayableDirector.", "OK");
-                return;
-            }
-
-            List<CameraSplineSegment> segs = tool.EditorSegments;
-            if (segs.Count == 0)
-            {
-                EditorUtility.DisplayDialog("CameraTool", "No segments. Click Sync first.", "OK");
-                return;
-            }
-
-            Undo.RecordObject(timeline, "Generate Camera Timeline Clips");
-
-            CameraToolTrack cameraTrack = null;
-            foreach (TrackAsset track in timeline.GetOutputTracks())
-            {   
-                if (track is CameraToolTrack ct)
-                {
-                    cameraTrack = ct;
-                    break;
-                }
-            }
-
-            if (!cameraTrack)
-            {
-                cameraTrack = timeline.CreateTrack<CameraToolTrack>(null, "🎬 Camera Spline");
-                director.SetGenericBinding(cameraTrack, tool);
-            }
-
-            // Clear
-            var existing = new List<TimelineClip>(cameraTrack.GetClips());
-            foreach (var c in existing)
-            {
-                cameraTrack.DeleteClip(c);
-            }
-
-            // Create
-            int segmentCount = segs.Count;
-            double currentTime = 0;
-
-            for (int i = 0; i < segmentCount; i++)
-            {
-                CameraSplineSegment seg = segs[i];
-                float startP = (float)i / segmentCount;
-                float endP = (float)(i + 1) / segmentCount;
-
-                TimelineClip clip = cameraTrack.CreateDefaultClip();
-                clip.displayName = seg.label;
-                clip.start = currentTime;
-                clip.duration = seg.duration;
-
-                CameraToolClip clipAsset = clip.asset as CameraToolClip;
-                if (clipAsset)
-                {
-                    Undo.RecordObject(clipAsset, "Configure Camera Clip");
-                    clipAsset.Template.startProgress = startP;
-                    clipAsset.Template.endProgress = endP;
-                    clipAsset.Template.easingCurve = new AnimationCurve(seg.easing.keys);
-                    EditorUtility.SetDirty(clipAsset);
-                }
-
-                currentTime += seg.duration + seg.waitAtEnd;
-            }
-
-            EditorUtility.SetDirty(timeline);
-            EditorUtility.SetDirty(cameraTrack);
-            AssetDatabase.SaveAssets();
-
-            Debug.Log($"[CameraTool] Generated {segmentCount} clips. Total: {currentTime:F1}s");
-        }
-
-        // ══════════════════════════════════════════════════════════════
-        // Quick Actions + Play Preview
-        // ══════════════════════════════════════════════════════════════
-
-        private void DrawQuickActions(CameraTool tool)
-        {
-            EditorGUILayout.BeginVertical("helpbox");
-            EditorGUILayout.LabelField("Quick Actions", EditorStyles.miniBoldLabel);
-            DrawThinSeparator();
-
-            EditorGUILayout.BeginHorizontal();
-
-            if (GUILayout.Button("⏮  Start", GUILayout.Height(28)))
-            {
-                _splineProgress.floatValue = 0f;
-                serializedObject.ApplyModifiedProperties();
-                if (!Application.isPlaying)
-                    tool.EditorEvaluateAt(0f);
-                
-                SceneView.RepaintAll();
-            }
-
-            if (GUILayout.Button("⏭  End", GUILayout.Height(28)))
-            {
-                _splineProgress.floatValue = 1f;
-                serializedObject.ApplyModifiedProperties();
-                if (!Application.isPlaying)
-                    tool.EditorEvaluateAt(1f);
-                
-                SceneView.RepaintAll();
-            }
-
-            if (_isCameraLocked)
-                GUI.backgroundColor = new Color(1f, 0.6f, 0f);
-            
-            string focusText = _isCameraLocked ? "🔒  Locked to Camera" : "📍  Focus & Lock";
-            if (GUILayout.Button(focusText, GUILayout.Height(28)))
-            {
-                _isCameraLocked = !_isCameraLocked;
-                if (_isCameraLocked && tool.EditorCamera)
-                {
-                    SceneView sv = SceneView.lastActiveSceneView;
-                    if (sv)
-                        sv.AlignViewToObject(tool.EditorCamera.transform);
-                }
-            }
-            GUI.backgroundColor = Color.white;
-
-            EditorGUILayout.EndHorizontal();
-
-            // ── Play Preview ──
-            EditorGUILayout.Space(4);
-
-            if (!_isPreviewing)
-            {
-                GUI.backgroundColor = new Color(0.2f, 0.85f, 0.3f);
-                if (GUILayout.Button("▶  Preview Animation", GUILayout.Height(28)))
-                    StartPreview(tool);
-                
-                GUI.backgroundColor = Color.white;
-            }
-            else
-            {
-                GUI.backgroundColor = new Color(0.9f, 0.2f, 0.2f);
-                if (GUILayout.Button("⏹  Stop Preview", GUILayout.Height(28)))
-                    StopPreview();
-                
-                GUI.backgroundColor = Color.white;
-            }
-
-            EditorGUILayout.EndVertical();
-            EditorGUILayout.Space(4);
-        }
-
-        // ── Preview System ───────────────────────────────────────────
-
-        private void StartPreview(CameraTool tool)
-        {
-            int segCount = _segments.arraySize;
-            if (segCount == 0)
-                return;
-
-            _previewSegStarts = new float[segCount];
-            _previewSegDurations = new float[segCount];
-            _previewSegCurves = new AnimationCurve[segCount];
-
-            float cumulative = 0f;
-            for (int i = 0; i < segCount; i++)
-            {
-                var seg = _segments.GetArrayElementAtIndex(i);
-                float dur = seg.FindPropertyRelative("duration").floatValue;
-                float wait = seg.FindPropertyRelative("waitAtEnd").floatValue;
-                AnimationCurve curve = seg.FindPropertyRelative("easing").animationCurveValue;
-
-                _previewSegStarts[i] = cumulative;
-                _previewSegDurations[i] = dur;
-                _previewSegCurves[i] = curve ?? AnimationCurve.Linear(0, 0, 1, 1);
-
-                cumulative += dur + wait;
-            }
-
-            _previewTotalDuration = cumulative;
-            _previewStartTime = EditorApplication.timeSinceStartup;
-            _isPreviewing = true;
-
-            EditorApplication.update += PreviewUpdate;
-        }
-
-        private void StopPreview()
-        {
-            if (!_isPreviewing)
-                return;
-            
-            _isPreviewing = false;
-            EditorApplication.update -= PreviewUpdate;
-        }
-
-        private void PreviewUpdate()
-        {
-            if (!_isPreviewing || target == null)
-            {
-                StopPreview();
-                return;
-            }
-
-            CameraTool tool = (CameraTool)target;
-            float elapsed = (float)(EditorApplication.timeSinceStartup - _previewStartTime);
-
-            if (elapsed >= _previewTotalDuration)
-            {
-                tool.EditorEvaluateAt(1f);
-                StopPreview();
-                return;
-            }
-
-            // Find current segment and calculate progress
-            int segCount = _previewSegStarts.Length;
-            float progress = 1f;
-
-            for (int i = 0; i < segCount; i++)
-            {
-                if (elapsed < _previewSegStarts[i] + _previewSegDurations[i])
-                {
-                    float t = Mathf.Clamp01((elapsed - _previewSegStarts[i]) / _previewSegDurations[i]);
-                    float easedT = _previewSegCurves[i].Evaluate(t);
-                    progress = Mathf.Lerp((float)i / segCount, (float)(i + 1) / segCount, easedT);
-                    break;
-                }
-                
-                // If in wait time between segments
-                if (i < segCount - 1 && elapsed < _previewSegStarts[i + 1])
-                {
-                    progress = (float)(i + 1) / segCount;
-                    break;
-                }
-            }
-
-            tool.EditorEvaluateAt(Mathf.Clamp01(progress));
-            SceneView.RepaintAll();
-            Repaint();
-        }
-
-        // ══════════════════════════════════════════════════════════════
-        // Debug Section
-        // ══════════════════════════════════════════════════════════════
-
-        private void DrawDebugSection(CameraTool tool)
-        {
-            _foldDebug = DrawSectionHeader("🛠  Debug Info", _foldDebug);
-            if (!_foldDebug)
-                return;
-
-            EditorGUI.indentLevel++;
-            GUI.enabled = false;
-
-            if (tool.EditorRailCount > 0)
-            {
-                SplineSample sample = tool.EditorSampleAt(_splineProgress.floatValue);
-                EditorGUILayout.Vector3Field("Position", sample.position);
-                EditorGUILayout.Vector3Field("Forward", sample.forward);
-                EditorGUILayout.Vector3Field("Up", sample.up);
-            }
-            else
-            {
-                EditorGUILayout.HelpBox("Assign Spline Rails to see debug data.", MessageType.Info);
-            }
-
-            GUI.enabled = true;
-            EditorGUI.indentLevel--;
-            EditorGUILayout.Space(4);
-        }
-
-        // ══════════════════════════════════════════════════════════════
-        // Helpers
-        // ══════════════════════════════════════════════════════════════
 
         private static bool DrawSectionHeader(string title, bool foldout)
         {
-            EditorGUILayout.Space(2);
-            var rect = EditorGUILayout.GetControlRect(false, 22);
+            EditorGUILayout.Space(12);
+            var rect = EditorGUILayout.GetControlRect(false, 24);
             
-            EditorGUI.DrawRect(rect, BoxBg);
-            rect.x += 4;
-            rect.width -= 4;
-            return EditorGUI.Foldout(rect, foldout, title, true, EditorStyles.foldoutHeader);
+            // Thin subtle line above
+            EditorGUI.DrawRect(new Rect(rect.x, rect.y, rect.width, 1), LineColor);
+            
+            // Accent dash
+            EditorGUI.DrawRect(new Rect(rect.x, rect.y + 6, 2, 12), CyanAccent);
+
+            var style = new GUIStyle(EditorStyles.foldoutHeader) 
+            { 
+                fontSize = 12, 
+                fontStyle = FontStyle.Bold,
+            };
+            
+            return EditorGUI.Foldout(new Rect(rect.x + 10, rect.y + 4, rect.width - 10, 20), foldout, title.ToUpper(), true, style);
         }
 
-        private static void InitStyles()
+        private static void DrawThinSeparator()
         {
-            if (_headerStyle != null)
-                return;
-
-            _headerStyle = new GUIStyle(EditorStyles.boldLabel)
-            {
-                fontSize = 16, alignment = TextAnchor.MiddleLeft,
-                normal = { textColor = HeaderColor }, fixedHeight = 32
-            };
-            
-            _subHeaderStyle = new GUIStyle(EditorStyles.boldLabel)
-            {
-                fontSize = 12, normal = { textColor = new Color(0.8f, 0.8f, 0.8f) }
-            };
-            
-            _statusOkStyle = new GUIStyle(EditorStyles.miniLabel)
-            {
-                fontSize = 11, fontStyle = FontStyle.Bold, normal = { textColor = OkColor }
-            };
-            
-            _statusBadStyle = new GUIStyle(EditorStyles.miniLabel)
-            {
-                fontSize = 11, fontStyle = FontStyle.Bold, normal = { textColor = BadColor }
-            };
-            
-            _progressLabelStyle = new GUIStyle(EditorStyles.boldLabel)
-            {
-                fontSize = 11, alignment = TextAnchor.MiddleLeft, normal = { textColor = Color.white }
-            };
+            var rect = EditorGUILayout.GetControlRect(false, 1);
+            EditorGUI.DrawRect(rect, LineColor);
         }
 
-        // ══════════════════════════════════════════════════════════════
-        // Scene View Sync Logic
-        // ══════════════════════════════════════════════════════════════
+        private void InitStyles()
+        {
+            if (_headerStyle != null) return;
+            
+            _headerStyle = new GUIStyle(EditorStyles.label) 
+            { 
+                fontSize = 18, 
+                fontStyle = FontStyle.Bold,
+                normal = { textColor = Color.white }
+            };
+
+            _statusOkStyle = new GUIStyle(EditorStyles.miniLabel) { fontSize = 10, fontStyle = FontStyle.Bold, normal = { textColor = OkColor } };
+            _statusBadStyle = new GUIStyle(EditorStyles.miniLabel) { fontSize = 10, fontStyle = FontStyle.Bold, normal = { textColor = BadColor } };
+        }
+
+        // ── Logic ─────────────────────────────────────────────────────
+
+        private void AutoScanChapters(CameraTool tool)
+        {
+            string[] guids = AssetDatabase.FindAssets("t:TimelineAsset");
+            foreach (var guid in guids)
+            {
+                var asset = AssetDatabase.LoadAssetAtPath<TimelineAsset>(AssetDatabase.GUIDToAssetPath(guid));
+                if (!asset.name.Contains("Camera")) continue;
+                bool exists = false;
+                for (int i = 0; i < tool.EditorChaptersCount(); i++) if (tool.EditorGetTimeline(i) == asset) exists = true;
+                if (exists) continue;
+                _chapters.arraySize++;
+                var c = _chapters.GetArrayElementAtIndex(_chapters.arraySize - 1);
+                c.FindPropertyRelative("name").stringValue = asset.name;
+                c.FindPropertyRelative("timeline").objectReferenceValue = asset;
+                c.FindPropertyRelative("debugColor").colorValue = Color.HSVToRGB(Random.value, 0.7f, 0.9f);
+            }
+        }
+
+        private void GenerateTimelineClips(CameraTool tool, int index)
+        {
+            var timeline = tool.EditorGetTimeline(index);
+            if (!timeline) return;
+            var segs = tool.EditorSegments(index);
+            Undo.RecordObject(timeline, "Gen Timeline");
+            CameraToolTrack track = null;
+            foreach (var t in timeline.GetOutputTracks()) if (t is CameraToolTrack ct) track = ct;
+            if (!track) track = timeline.CreateTrack<CameraToolTrack>(null, "Camera");
+            foreach (var clip in new List<TimelineClip>(track.GetClips())) track.DeleteClip(clip);
+            double time = 0;
+            for (int i = 0; i < segs.Count; i++)
+            {
+                var clip = track.CreateDefaultClip();
+                clip.start = time; clip.duration = segs[i].duration;
+                var asset = clip.asset as CameraToolClip;
+                asset.Template.startProgress = (float)i / segs.Count;
+                asset.Template.endProgress = (float)(i + 1) / segs.Count;
+                asset.Template.easingCurve = new AnimationCurve(segs[i].easing.keys);
+                time += segs[i].duration + segs[i].waitAtEnd;
+            }
+            AssetDatabase.SaveAssets();
+        }
+
+        private void StartPreview(CameraTool tool)
+        {
+            var chapter = _chapters.GetArrayElementAtIndex(_selectedChapterIndex);
+            var segs = chapter.FindPropertyRelative("segments");
+            if (segs.arraySize == 0) return;
+            _previewSegStarts = new float[segs.arraySize];
+            _previewSegDurations = new float[segs.arraySize];
+            _previewSegCurves = new AnimationCurve[segs.arraySize];
+            float time = 0;
+            for (int i = 0; i < segs.arraySize; i++)
+            {
+                var s = segs.GetArrayElementAtIndex(i);
+                _previewSegStarts[i] = time;
+                _previewSegDurations[i] = s.FindPropertyRelative("duration").floatValue;
+                _previewSegCurves[i] = s.FindPropertyRelative("easing").animationCurveValue;
+                time += _previewSegDurations[i] + s.FindPropertyRelative("waitAtEnd").floatValue;
+            }
+            _previewTotalDuration = time;
+            _previewStartTime = EditorApplication.timeSinceStartup;
+            _isPreviewing = true;
+            EditorApplication.update += PreviewUpdate;
+        }
+
+        private void StopPreview() { if (!_isPreviewing) return; _isPreviewing = false; EditorApplication.update -= PreviewUpdate; }
+
+        private void PreviewUpdate()
+        {
+            if (!_isPreviewing || target == null) { StopPreview(); return; }
+            float elapsed = (float)(EditorApplication.timeSinceStartup - _previewStartTime);
+            if (elapsed >= _previewTotalDuration) { StopPreview(); return; }
+            int count = _previewSegStarts.Length;
+            float p = 0;
+            for (int i = 0; i < count; i++)
+            {
+                if (elapsed < _previewSegStarts[i] + _previewSegDurations[i])
+                {
+                    float t = _previewSegCurves[i].Evaluate((elapsed - _previewSegStarts[i]) / _previewSegDurations[i]);
+                    p = Mathf.Lerp((float)i / count, (float)(i + 1) / count, t);
+                    break;
+                }
+            }
+            ((CameraTool)target).EditorEvaluateAt(p);
+            SceneView.RepaintAll();
+        }
 
         private void SyncSceneView(SceneView sv)
         {
-            if (!_isCameraLocked || Application.isPlaying)
-                return;
-
-            CameraTool tool = (CameraTool)target;
-            Camera cam = tool.EditorCamera;
-            if (cam == null)
-                return;
-
-            Transform t = cam.transform;
-
-            sv.pivot = t.position;
-            sv.rotation = t.rotation;
-            sv.size = 0f;
-            sv.orthographic = cam.orthographic;
-            
-            SerializedObject so = new SerializedObject(sv);
-            so.Update();
-            var fovProp = so.FindProperty("m_FieldOfView");
-            if (fovProp != null)
-            {
-                fovProp.floatValue = cam.fieldOfView;
-                so.ApplyModifiedPropertiesWithoutUndo();
-            }
-
+            if (!_isCameraLocked || Application.isPlaying) return;
+            var cam = ((CameraTool)target).EditorCamera;
+            if (cam == null) return;
+            sv.pivot = cam.transform.position; sv.rotation = cam.transform.rotation; sv.size = 0;
             sv.Repaint();
-        }
-
-        private void OnSceneGUI()
-        {
-            if (!_isCameraLocked || !_showHud)
-                return;
-
-            DrawCinematicHUD();
-        }
-
-        private void DrawCinematicHUD()
-        {
-            Handles.BeginGUI();
-            Rect viewRect = SceneView.lastActiveSceneView.position;
-            float w = viewRect.width;
-            float h = viewRect.height;
-
-            // 1. Cinematic Letterbox
-            if (_showLetterbox)
-            {
-                float barHeight = h * _letterboxHeight;
-                EditorGUI.DrawRect(new Rect(0, 0, w, barHeight), Color.black);
-                EditorGUI.DrawRect(new Rect(0, h - barHeight, w, barHeight), Color.black);
-            }
-
-            // 2. Rule of Thirds
-            if (_showGrid)
-            {
-                Color gridColor = new Color(1f, 1f, 1f, 0.2f);
-                
-                // Vertical lines
-                EditorGUI.DrawRect(new Rect(w / 3f, 0, 1, h), gridColor);
-                EditorGUI.DrawRect(new Rect(2f * w / 3f, 0, 1, h), gridColor);
-                
-                // Horizontal lines
-                EditorGUI.DrawRect(new Rect(0, h / 3f, w, 1), gridColor);
-                EditorGUI.DrawRect(new Rect(0, 2f * h / 3f, w, 1), gridColor);
-            }
-
-            // 3. 16:9 Safe Area Guide
-            Color safeColor = new Color(0f, 1f, 0.3f, 0.15f);
-            float targetAspect = 16f / 9f;
-            float currentAspect = w / h;
-            if (currentAspect > targetAspect)
-            {
-                float safeW = h * targetAspect;
-                float side = (w - safeW) / 2f;
-                EditorGUI.DrawRect(new Rect(side, 0, 1, h), safeColor);
-                EditorGUI.DrawRect(new Rect(w - side, 0, 1, h), safeColor);
-            }
-
-            Handles.EndGUI();
         }
     }
 }

@@ -48,25 +48,25 @@ namespace Metroma.CameraTool.Editor
             int totalSegments = tool.EditorTotalSegmentCount;
             if (totalSegments == 0) return;
 
+            // Get selected chapter color if we are in editor (placeholder logic for now, using cyan as default)
+            Color mainColor = Color.cyan;
+            
             int globalSegIndex = 0;
 
             for (int r = 0; r < rails.Count; r++)
             {
                 SplineComputer spline = rails[r];
-                if (spline == null)
-                    continue;
+                if (spline == null) continue;
 
                 int nodeCount = spline.pointCount;
                 int splineSegments = Mathf.Max(0, nodeCount - 1);
 
                 for (int seg = 0; seg < splineSegments; seg++)
                 {
-                    float hue = totalSegments > 1 ? (float)globalSegIndex / totalSegments * 0.7f : 0.55f;
-                    
-                    Color segColor = Color.HSVToRGB(hue, 0.6f, 0.9f);
-                    segColor.a = 0.6f;
-
-                    Gizmos.color = segColor;
+                    // Use a slightly varying shade of the main color to distinguish nodes
+                    float shade = 0.8f + (globalSegIndex % 2 == 0 ? 0.2f : 0f);
+                    Gizmos.color = mainColor * shade;
+                    Gizmos.color = new Color(Gizmos.color.r, Gizmos.color.g, Gizmos.color.b, 0.6f);
 
                     float segStart = (float)seg / splineSegments;
                     float segEnd = (float)(seg + 1) / splineSegments;

@@ -389,8 +389,8 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 330585543}
   serializedVersion: 2
-  m_LocalRotation: {x: -0.0750102, y: -0.7163784, z: -0.07795992, w: 0.6892733}
-  m_LocalPosition: {x: 0.02742244, y: 0.9158753, z: -0.010507781}
+  m_LocalRotation: {x: 0.13825494, y: -0.027656456, z: 0.0038622534, w: 0.99000293}
+  m_LocalPosition: {x: -3.3768685, y: 0.57867247, z: 3.1292193}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -659,7 +659,7 @@ Transform:
   m_GameObject: {fileID: 1124466360}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalPosition: {x: 0, y: 0, z: -0.391}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -685,8 +685,126 @@ MonoBehaviour:
   lookAtTargets:
   - {fileID: 1483606895}
   chapters:
-  - name: Chapter 1
-    director: {fileID: 1124466363}
+  - name: TestCameraTimeline 1
+    timeline: {fileID: 11400000, guid: 0d8fbe606e712ae42acc54507dcc87fb, type: 2}
+    startRailIndex: 0
+    debugColor: {r: 0.9, g: 0.27, b: 0.41684964, a: 1}
+    isExpanded: 1
+    segments:
+    - label: "Node 0 \u2192 1"
+      duration: 1
+      easing:
+        serializedVersion: 2
+        m_Curve:
+        - serializedVersion: 3
+          time: 0
+          value: 0
+          inSlope: 0
+          outSlope: 0
+          tangentMode: 0
+          weightedMode: 0
+          inWeight: 0
+          outWeight: 0
+        - serializedVersion: 3
+          time: 1
+          value: 1
+          inSlope: 0
+          outSlope: 0
+          tangentMode: 0
+          weightedMode: 0
+          inWeight: 0
+          outWeight: 0
+        m_PreInfinity: 2
+        m_PostInfinity: 2
+        m_RotationOrder: 4
+      waitAtEnd: 0
+    - label: "Node 1 \u2192 2"
+      duration: 1
+      easing:
+        serializedVersion: 2
+        m_Curve:
+        - serializedVersion: 3
+          time: 0
+          value: 0
+          inSlope: 0
+          outSlope: 0
+          tangentMode: 0
+          weightedMode: 0
+          inWeight: 0
+          outWeight: 0
+        - serializedVersion: 3
+          time: 1
+          value: 1
+          inSlope: 0
+          outSlope: 0
+          tangentMode: 0
+          weightedMode: 0
+          inWeight: 0
+          outWeight: 0
+        m_PreInfinity: 2
+        m_PostInfinity: 2
+        m_RotationOrder: 4
+      waitAtEnd: 0
+  - name: TestCameraTimeline
+    timeline: {fileID: 11400000, guid: 74d1ae1b6e18e7e4485227e9a813395b, type: 2}
+    startRailIndex: 0
+    debugColor: {r: 0.63259923, g: 0.9, b: 0.27, a: 1}
+    isExpanded: 0
+    segments:
+    - label: "Node 0 \u2192 1"
+      duration: 1
+      easing:
+        serializedVersion: 2
+        m_Curve:
+        - serializedVersion: 3
+          time: 0
+          value: 0
+          inSlope: 0
+          outSlope: 0
+          tangentMode: 0
+          weightedMode: 0
+          inWeight: 0
+          outWeight: 0
+        - serializedVersion: 3
+          time: 1
+          value: 1
+          inSlope: 0
+          outSlope: 0
+          tangentMode: 0
+          weightedMode: 0
+          inWeight: 0
+          outWeight: 0
+        m_PreInfinity: 2
+        m_PostInfinity: 2
+        m_RotationOrder: 4
+      waitAtEnd: 0
+    - label: "Node 1 \u2192 2"
+      duration: 1
+      easing:
+        serializedVersion: 2
+        m_Curve:
+        - serializedVersion: 3
+          time: 0
+          value: 0
+          inSlope: 0
+          outSlope: 0
+          tangentMode: 0
+          weightedMode: 0
+          inWeight: 0
+          outWeight: 0
+        - serializedVersion: 3
+          time: 1
+          value: 1
+          inSlope: 0
+          outSlope: 0
+          tangentMode: 0
+          weightedMode: 0
+          inWeight: 0
+          outWeight: 0
+        m_PreInfinity: 2
+        m_PostInfinity: 2
+        m_RotationOrder: 4
+      waitAtEnd: 0
   onChapterStart:
     m_PersistentCalls:
       m_Calls: []
@@ -698,61 +816,6 @@ MonoBehaviour:
       m_Calls: []
   splineProgress: 0
   lookAtWeight: 1
-  segments:
-  - label: "Node 0 \u2192 1"
-    duration: 5
-    easing:
-      serializedVersion: 2
-      m_Curve:
-      - serializedVersion: 3
-        time: 0
-        value: 0
-        inSlope: 0
-        outSlope: 0
-        tangentMode: 0
-        weightedMode: 0
-        inWeight: 0
-        outWeight: 0
-      - serializedVersion: 3
-        time: 1
-        value: 1
-        inSlope: 0
-        outSlope: 0
-        tangentMode: 0
-        weightedMode: 0
-        inWeight: 0
-        outWeight: 0
-      m_PreInfinity: 2
-      m_PostInfinity: 2
-      m_RotationOrder: 4
-    waitAtEnd: 5
-  - label: "Node 1 \u2192 2"
-    duration: 1
-    easing:
-      serializedVersion: 2
-      m_Curve:
-      - serializedVersion: 3
-        time: 0
-        value: 0
-        inSlope: 0
-        outSlope: 0
-        tangentMode: 0
-        weightedMode: 0
-        inWeight: 0
-        outWeight: 0
-      - serializedVersion: 3
-        time: 1
-        value: 1
-        inSlope: 0
-        outSlope: 0
-        tangentMode: 0
-        weightedMode: 0
-        inWeight: 0
-        outWeight: 0
-      m_PreInfinity: 2
-      m_PostInfinity: 2
-      m_RotationOrder: 4
-    waitAtEnd: 0
 --- !u!320 &1124466363
 PlayableDirector:
   m_ObjectHideFlags: 0
@@ -770,6 +833,10 @@ PlayableDirector:
   m_SceneBindings:
   - key: {fileID: 8395023584946261708, guid: 74d1ae1b6e18e7e4485227e9a813395b, type: 2}
     value: {fileID: 1124466362}
+  - key: {fileID: 8395023584946261708, guid: 043640c4c4b37c7498dd1770d48e0016, type: 2}
+    value: {fileID: 0}
+  - key: {fileID: 8395023584946261708, guid: 0d8fbe606e712ae42acc54507dcc87fb, type: 2}
+    value: {fileID: 0}
   m_ExposedReferences:
     m_References: []
 --- !u!114 &1124466364
